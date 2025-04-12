@@ -33,7 +33,7 @@ export default function WebCam() {
   return (
     <div>
       <video
-        className="w-3xl rounded-2xl border-orange border-8"
+        className="w-2xl rounded-2xl border-8 z-0"
         ref={videoRef}
         autoPlay
         playsInline

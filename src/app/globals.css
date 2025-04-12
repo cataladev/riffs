@@ -1,3 +1,13 @@
+/* Colors
+
+#9722b6 - purple 
+#fe5b35 - orange
+#eb3d5f - pink (inbetween)
+
+
+*/
+
+
 @import "tailwindcss";
 
 :root {
@@ -10,6 +20,10 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-purple2: #9722b6;
+  --color-orange2: #fe5b35;
+  --color-pink2: #eb3d5f;
 }
 
 @media (prefers-color-scheme: dark) {
