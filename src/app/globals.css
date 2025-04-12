@@ -1,3 +1,13 @@
+/* Colors
+
+#9722b6 - purple 
+#fe5b35 - orange
+#eb3d5f - pink (inbetween)
+
+
+*/
+
+
 @import "tailwindcss";
 
 :root {
@@ -10,17 +20,78 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-purple2: #9722b6;
+  --color-orange2: #fe5b35;
+  --color-pink2: #eb3d5f;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+
+.moving-border {
+  animation: moving-border 4s linear infinite;
+}
+
+.animated-border {
+  position: absolute;
+  padding: 8px;
+  border-radius: 1rem; 
+  background: conic-gradient(
+    from 0deg,
+    #fe5b35,
+    #eb3d5f,
+    #9722b6,
+    #fe5b35
+  );
+  animation: spin-border 30s linear infinite;
+}
+
+@keyframes spin-border {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.animated-border > video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.75rem;
 }
+
+
+@keyframes moving-border {
+  0% {
+    transform: rotate(0deg) scale(10);
+  }
+  100% {
+    transform: rotate(-360deg) scale(10);
+  }
+}
+
+@keyframes fall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(110vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.animate-fall {
+  animation-name: fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+
+
+
