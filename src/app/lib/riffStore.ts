@@ -12,12 +12,18 @@ export type RiffNote = {
 
 /**
  * Represents a complete riff session.
+ * @property id - A unique identifier for the riff.
+ * @property name - The name of the riff.
  * @property recording - The name or identifier for the session.
  * @property notes - An array of notes that belong to the session.
+ * @property bpm - The beats per minute for the riff.
  */
 export type Riff = {
+  id: string;
+  name: string;
   recording: string;
   notes: RiffNote[];
+  bpm: number;
 }
 
 // In-memory storage for the current riff.
@@ -38,4 +44,22 @@ export function saveRiff(riff: Riff): void {
  */
 export function getRiff(): Riff | null {
   return currentRiff;
+}
+
+/**
+ * Updates the notes of the current riff.
+ * @param notes - The new notes to update the current riff with.
+ * @param bpm - The beats per minute for the riff.
+ * @returns true if the update was successful, false if no riff exists.
+ */
+export function updateRiffNotes(notes: RiffNote[], bpm: number): boolean {
+  if (!currentRiff) return false;
+  
+  currentRiff = {
+    ...currentRiff,
+    notes,
+    bpm
+  };
+  
+  return true;
 }
