@@ -2,7 +2,7 @@
 const tuning = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'];
 
 function getSemitone(note: string): number {
-  const noteMap = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
+  const noteMap: Record<string, number> = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
   const match = note.match(/^([A-G]#?)(\d)$/);
 
   if (!match) return -1;
@@ -10,13 +10,6 @@ function getSemitone(note: string): number {
   const [, letter, octaveStr] = match;
   const octave = parseInt(octaveStr);
   return octave * 12 + noteMap[letter];
-}
-
-function getNoteFromSemitone(semitone: number): string {
-  const noteMap = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  const note = noteMap[semitone % 12];
-  const octave = Math.floor(semitone / 12);
-  return `${note}${octave}`;
 }
 
 /**

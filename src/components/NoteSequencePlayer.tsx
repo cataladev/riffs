@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Note, NoteSequence } from '../types/note';
+import { NoteSequence } from '../types/note';
 import Fretboard from './Fretboard';
 
 interface NoteSequencePlayerProps {
@@ -19,7 +19,7 @@ const NoteSequencePlayer: React.FC<NoteSequencePlayerProps> = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [activeNotes, setActiveNotes] = useState<string[]>([]);
   const startTimeRef = useRef<number>(0);
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | undefined>(undefined);
 
   const standardTuning = ['E4', 'B3', 'G3', 'D3', 'A2', 'E2'];
   const numFrets = 12;
@@ -64,7 +64,7 @@ const NoteSequencePlayer: React.FC<NoteSequencePlayerProps> = ({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isPlaying, sequence, onEnd]);
+  }, [isPlaying, sequence, onEnd, currentTime]);
 
   const togglePlay = () => {
     if (isPlaying) {

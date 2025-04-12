@@ -1,5 +1,4 @@
 import React from 'react';
-import { Note } from '../types/note';
 
 interface FretboardProps {
   activeNotes: string[];  // Array of currently active note pitches
