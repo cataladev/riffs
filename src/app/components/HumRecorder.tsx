@@ -216,10 +216,19 @@ export default function HumRecorder() {
   const [detectedBpm, setDetectedBpm] = useState<number | null>(null)
   const [audioLevel, setAudioLevel] = useState(0)
   const [recordingDuration, setRecordingDuration] = useState(0)
+  const [lastDetectedNote, setLastDetectedNote] = useState<string | null>(null)
+  const [lastNoteTime, setLastNoteTime] = useState<number>(0)
+  const [noteHoldTime, setNoteHoldTime] = useState<number>(0)
   const [recordingTimer, setRecordingTimer] = useState<number | null>(null)
+  const [recentNotes, setRecentNotes] = useState<string[]>([])
+  const [noteTransitionTime, setNoteTransitionTime] = useState<number>(0)
+  const [filteredNote, setFilteredNote] = useState<string | null>(null)
+  const [filteredNoteTime, setFilteredNoteTime] = useState<number>(0)
+  
   const audioContextRef = useRef<AudioContext | null>(null)
   const processorRef = useRef<ScriptProcessorNode | null>(null)
   const startTimeRef = useRef<number>(0)
+  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
 
   // Update recording duration
@@ -289,6 +298,12 @@ export default function HumRecorder() {
     const detector = PitchDetector.forFloat32Array(2048)
 
     startTimeRef.current = performance.now()
+    setLastNoteTime(0)
+    setNoteHoldTime(0)
+    setRecentNotes([])
+    setNoteTransitionTime(0)
+    setFilteredNote(null)
+    setFilteredNoteTime(0)
 
     processor.onaudioprocess = (e) => {
       const input = new Float32Array(detector.inputLength)
@@ -305,12 +320,61 @@ export default function HumRecorder() {
 
       if (clarity > 0.95 && pitch) {
         const note = getNoteFromFrequency(pitch)
-        const timestamp = ((performance.now() - startTimeRef.current) / 1000).toFixed(2)
-
-        setNotes((prev) => {
-          if (prev[timestamp]) return prev
-          return { ...prev, [timestamp]: note }
-        })
+        const currentTime = performance.now()
+        const elapsedTime = (currentTime - startTimeRef.current) / 1000
+        
+        // Update recent notes list (keep last 5 notes)
+        setRecentNotes(prev => {
+          const updated = [...prev, note];
+          return updated.slice(-5);
+        });
+        
+        // Check if this is a new note or a held note
+        if (note !== lastDetectedNote) {
+          // New note detected
+          setLastDetectedNote(note)
+          setLastNoteTime(elapsedTime)
+          setNoteHoldTime(0)
+          setNoteTransitionTime(elapsedTime)
+          
+          // Check if this is a significant note change (not an intermediate note)
+          const isSignificantChange = isSignificantNoteChange(note, recentNotes);
+          
+          if (isSignificantChange) {
+            // Record the new note
+            const timestamp = elapsedTime.toFixed(2)
+            setNotes((prev) => {
+              if (prev[timestamp]) return prev
+              return { ...prev, [timestamp]: note }
+            })
+            setFilteredNote(null)
+          } else {
+            // This is an intermediate note being filtered out
+            setFilteredNote(note)
+            setFilteredNoteTime(elapsedTime)
+            
+            // Clear the filtered note after 1 second
+            setTimeout(() => {
+              setFilteredNote(null)
+            }, 1000)
+          }
+        } else {
+          // Same note is being held
+          const holdTime = elapsedTime - lastNoteTime
+          setNoteHoldTime(holdTime)
+          
+          // Only record a new instance of the same note if it's been held for a significant time
+          // This prevents rapid-fire duplicate notes but allows for sustained notes
+          if (holdTime > 0.5) { // 500ms threshold
+            const timestamp = elapsedTime.toFixed(2)
+            setNotes((prev) => {
+              if (prev[timestamp]) return prev
+              return { ...prev, [timestamp]: note }
+            })
+            setLastNoteTime(elapsedTime)
+            setNoteHoldTime(0)
+          }
+        }
       }
     }
 
@@ -319,12 +383,56 @@ export default function HumRecorder() {
     processorRef.current = processor
     setRecording(true)
     setRecordingDuration(0)
+    
+    // Update recording duration every second
+    recordingIntervalRef.current = setInterval(() => {
+      setRecordingDuration(prev => prev + 1)
+    }, 1000)
   }
 
+  // Helper function to determine if a note change is significant
+  const isSignificantNoteChange = (currentNote: string, recentNotes: string[]): boolean => {
+    if (recentNotes.length < 2) return true;
+    
+    // Get the note name and octave
+    const [currentNoteName, currentOctave] = currentNote.match(/([A-G]#?)(\d+)/)?.slice(1) || [];
+    if (!currentNoteName || !currentOctave) return true;
+    
+    // Get the last recorded note
+    const lastRecordedNote = recentNotes[recentNotes.length - 2];
+    const [lastNoteName, lastOctave] = lastRecordedNote.match(/([A-G]#?)(\d+)/)?.slice(1) || [];
+    if (!lastNoteName || !lastOctave) return true;
+    
+    // Define note names for comparison
+    const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    
+    // Calculate the distance between notes
+    const currentNoteIndex = noteNames.indexOf(currentNoteName);
+    const lastNoteIndex = noteNames.indexOf(lastNoteName);
+    const octaveDiff = parseInt(currentOctave) - parseInt(lastOctave);
+    
+    // Calculate semitone difference
+    const semitoneDiff = Math.abs(octaveDiff * 12 + (currentNoteIndex - lastNoteIndex));
+    
+    // If the difference is more than 2 semitones, consider it a significant change
+    // This helps filter out intermediate notes during pitch transitions
+    return semitoneDiff > 2;
+  };
+
   const handleStop = () => {
-    processorRef.current?.disconnect()
-    audioContextRef.current?.close()
+    if (processorRef.current) {
+      processorRef.current.disconnect()
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close()
+    }
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current)
+      recordingIntervalRef.current = null
+    }
     setRecording(false)
+    setLastDetectedNote(null)
+    setRecentNotes([])
     
     // Calculate BPM from the recorded notes
     const timestamps = Object.keys(notes)
@@ -380,99 +488,137 @@ export default function HumRecorder() {
   }
   
   return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="relative group overflow-hidden bg-gradient-to-r from-[#fe5b35] to-[#9722b6] rounded-xl p-[2px] w-full max-w-[50%]">
-          <div className="relative z-10 bg-white rounded-xl p-6 shadow-lg">
-            <h1 className="text-3xl font-bold mb-6 text-center text-gradient bg-gradient-to-r from-[#9722b6] via-[#fe5b35] to-[#eb3d5f] text-transparent bg-clip-text">
-              Record Your Riff
-            </h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="relative group overflow-hidden bg-gradient-to-r from-[#fe5b35] to-[#9722b6] rounded-xl p-[2px] w-full max-w-[50%]">
+        <div className="relative z-10 bg-white rounded-xl p-6 shadow-lg">
+          <h1 className="text-3xl font-bold mb-6 text-center text-gradient bg-gradient-to-r from-[#9722b6] via-[#fe5b35] to-[#eb3d5f] text-transparent bg-clip-text">
+            Record Your Riff
+          </h1>
 
-            {detectedBpm && (
-              <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200">
-                <p className="font-medium text-lg">Detected BPM: {detectedBpm}</p>
-                <p className="text-sm">Based on the rhythm of your humming</p>
-              </div>
-            )}
-
-            <div className="mb-8">
-              <div className="h-24 bg-gray-100 rounded-lg overflow-hidden relative">
-                {recording && (
-                  <div
-                    className="absolute bottom-0 left-0 w-full bg-blue-500 transition-all duration-100"
-                    style={{
-                      height: `${audioLevel * 100}%`,
-                      opacity: 0.7,
-                    }}
-                  />
+          {detectedBpm && (
+            <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200">
+              <p className="font-medium text-lg">Detected BPM: {detectedBpm}</p>
+              <p className="text-sm">Based on the rhythm of your humming</p>
+            </div>
+          )}
+          
+          <div className="mb-8">
+            <div className="h-24 bg-gray-100 rounded-lg overflow-hidden relative">
+              {recording && (
+                <div 
+                  className="absolute bottom-0 left-0 w-full bg-blue-500 transition-all duration-100"
+                  style={{
+                    height: `${audioLevel * 100}%`,
+                    opacity: 0.7,
+                  }}
+                />
+              )}
+              <div className="absolute inset-0 flex items-center justify-center">
+                {recording ? (
+                  <div className="flex flex-col items-center">
+                    <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse mb-2"></div>
+                    <p className="text-gray-700 font-medium">
+                      Recording: {formatTime(recordingDuration)}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-gray-500">Press record to start humming your riff</p>
                 )}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  {recording ? (
-                    <div className="flex flex-col items-center">
-                      <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse mb-2"></div>
-                      <p className="text-gray-700 font-medium">
-                        Recording: {formatTime(recordingDuration)}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">Press record to start humming your riff</p>
-                  )}
-                </div>
               </div>
-            </div>
-
-            <div className="flex justify-center mb-8">
-              <CoolButton
-                label={recording ? "Stop Recording" : "Start Recording"}
-                onClick={recording ? handleStop : handleStart}
-                className={recording ? "from-red-500 to-red-600" : ""}
-              />
-            </div>
-
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4 text-gray-800">Detected Notes:</h2>
-              {Object.keys(notes).length > 0 ? (
-                <div className="bg-gray-50 p-4 rounded-lg max-h-60 overflow-y-auto">
-                  <ul className="space-y-2">
-                    {Object.entries(notes).map(([time, note], i) => (
-                      <li key={i} className="flex justify-between items-center p-2 bg-white rounded shadow-sm">
-                        <span className="font-mono text-blue-600">{note}</span>
-                        <span className="text-gray-500 text-sm">{parseFloat(time).toFixed(2)}s</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <div className="bg-gray-50 p-4 rounded-lg text-center text-gray-500">
-                  No notes detected yet. Start recording and hum a melody.
-                </div>
-              )}
-            </div>
-            
-            <div className="flex justify-center">
-              {Object.keys(notes).length > 0 && !recording && (
-                <button
-                  onClick={handleDone}
-                  className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center"
-                >
-                  <span>Continue to Edit</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 ml-2"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              )}
             </div>
           </div>
-          <span className="absolute inset-0 bg-white/20 blur-sm animate-shine" />
+          
+          {lastDetectedNote && (
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="text-gray-700 font-medium">Current Note: </span>
+                  <span className="text-blue-600 font-bold text-xl">{lastDetectedNote}</span>
+                </div>
+                {noteHoldTime > 0 && (
+                  <div className="text-sm text-gray-600">
+                    Holding for: {noteHoldTime.toFixed(1)}s
+                  </div>
+                )}
+              </div>
+              {noteHoldTime > 0 && (
+                <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-green-500 transition-all duration-100"
+                    style={{ width: `${Math.min(100, (noteHoldTime / 0.5) * 100)}%` }}
+                  ></div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {filteredNote && (
+            <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="text-gray-700 font-medium">Filtered Note: </span>
+                  <span className="text-yellow-600 font-bold text-xl">{filteredNote}</span>
+                </div>
+                <div className="text-sm text-gray-600">
+                  Intermediate note (not recorded)
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex justify-center mb-8">
+            <CoolButton
+              label={recording ? "Stop Recording" : "Start Recording"}
+              onClick={recording ? handleStop : handleStart}
+              className={recording ? "from-red-500 to-red-600" : ""}
+            />
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Detected Notes:</h2>
+            {Object.keys(notes).length > 0 ? (
+              <div className="bg-gray-50 p-4 rounded-lg max-h-60 overflow-y-auto">
+                <ul className="space-y-2">
+                  {Object.entries(notes).map(([time, note], i) => (
+                    <li key={i} className="flex justify-between items-center p-2 bg-white rounded shadow-sm">
+                      <span className="font-mono text-blue-600">{note}</span>
+                      <span className="text-gray-500 text-sm">{parseFloat(time).toFixed(2)}s</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div className="bg-gray-50 p-4 rounded-lg text-center text-gray-500">
+                No notes detected yet. Start recording and hum a melody.
+              </div>
+            )}
+          </div>
+          
+          <div className="flex justify-center">
+            {Object.keys(notes).length > 0 && !recording && (
+              <button
+                onClick={handleDone}
+                className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center"
+              >
+                <span>Continue to Edit</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 ml-2"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
+        <span className="absolute inset-0 bg-white/20 blur-sm animate-shine" />
       </div>
+    </div>
   )
 }

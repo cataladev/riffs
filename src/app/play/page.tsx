@@ -3,28 +3,31 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as Tone from 'tone';
 import { useSearchParams } from 'next/navigation';
+import NoteSequencePlayer from "../components/NoteSequencePlayer";
+import GuitarFretboard from "../components/GuitarFretboard";
+import * as Pitchy from "pitchy";
 
-const EXTRACT_OCTAVE = /\d+$/
+// Regular expression to extract octave from a note string
+const EXTRACT_OCTAVE = /\d+$/;
 const STANDARD_TUNING = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'];
 const FRET_COUNT = 24;
 
-// helper function to get the note at a specific fret on a specific string
+// Available pitches for fallback and closest match
+const availablePitches = [
+  "C5", "B4", "A4", "G4", "F4", "E4", "D4", "C4", "B3",
+  "A3", "G3", "F3", "E3", "D3", "C3", "B2", "A2", "G2", "F2", "E2"
+];
+
+// Get the note at a specific fret on a given string note
 const getNoteAtPosition = (stringNote: string, fret: number) => {
   const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
   const baseNote = stringNote.replace(EXTRACT_OCTAVE, '');
   const octave = parseInt(stringNote.match(EXTRACT_OCTAVE)?.[0] || '4');
-
-  // find the index of the base note
   const baseIndex = notes.findIndex(n => n === baseNote);
-  if (baseIndex === -1)
-    return null;
-
-  // calculate the new note index and octave
+  if (baseIndex === -1) return null;
   const newIndex = (baseIndex + fret) % 12;
   const octaveChange = Math.floor((baseIndex + fret) / 12);
   const newOctave = octave + octaveChange;
-
   return `${notes[newIndex]}${newOctave}`;
 };
 
@@ -33,85 +36,63 @@ type NotePosition = {
   fret: number
 }
 
-// find all possible positions for a note on the fretboard
-const getAllPositionsForNote = (note: string) => {
+// Find all positions for a given note on the fretboard
+const getAllPositionsForNote = (note: string): NotePosition[] => {
   const positions: NotePosition[] = [];
-
   const baseNote = note.replace(EXTRACT_OCTAVE, '');
   const octave = parseInt(note.match(EXTRACT_OCTAVE)?.[0] || '4');
 
-  console.log(`Finding positions for note: ${note} (base: ${baseNote}, octave: ${octave})`);
-
-  // for all notes in the std tuning 
   STANDARD_TUNING.forEach((stringNote, stringIndex) => {
     for (let fret = 0; fret <= FRET_COUNT; fret++) {
-      // get note at position; skip if none found
       const noteAtPosition = getNoteAtPosition(stringNote, fret);
-      if (!noteAtPosition) {
-        continue;
-      }
-
-      // get the base note and octave
+      if (!noteAtPosition) continue;
       const posBaseNote = noteAtPosition.replace(EXTRACT_OCTAVE, '');
-      const posOctave = parseInt(noteAtPosition.match(/\d+$/)?.[0] || '4');
-
-      // if this note in the fretboard matches the given one, store its position
+      const posOctave = parseInt(noteAtPosition.match(EXTRACT_OCTAVE)?.[0] || '4');
       if (posBaseNote === baseNote && posOctave === octave) {
-        console.log(`Found match at string ${stringIndex}, fret ${fret}: ${noteAtPosition}`);
-        positions.push({ stringIndex: stringIndex, fret: fret });
+        positions.push({ stringIndex, fret });
       }
     }
   });
 
-  // If no positions found, try to find the closest match
+  // Fallback: if no positions found, try matching by base note only
   if (positions.length === 0) {
-    console.log(`No exact matches found for ${note}, looking for fallback positions`);
-    // Try to find a note with the same base note but different octave
+    console.log(`No exact matches for ${note}, looking for fallbacks`);
     STANDARD_TUNING.forEach((stringNote, stringIndex) => {
       for (let fret = 0; fret <= FRET_COUNT; fret++) {
         const noteAtPosition = getNoteAtPosition(stringNote, fret);
-        if (!noteAtPosition) {
-          continue;
-        }
-
+        if (!noteAtPosition) continue;
         const posBaseNote = noteAtPosition.replace(EXTRACT_OCTAVE, '');
-        
-        // If base note matches but octave doesn't, add it as a fallback
         if (posBaseNote === baseNote) {
-          console.log(`Found fallback at string ${stringIndex}, fret ${fret}: ${noteAtPosition}`);
-          positions.push({ stringIndex: stringIndex, fret: fret });
+          console.log(`Fallback: string ${stringIndex}, fret ${fret} -> ${noteAtPosition}`);
+          positions.push({ stringIndex, fret });
         }
       }
     });
   }
-
-  console.log(`Total positions found for ${note}: ${positions.length}`);
   return positions;
 };
 
-// Generate a color based on note name for consistent coloring
-// Using brand colors from the landing page
+// Generate a color based on the note's base name for consistent styling
 const getNoteColor = (note: string) => {
   const baseNote = note.replace(EXTRACT_OCTAVE, '');
   const colorMap: Record<string, string> = {
-    'C': 'bg-[#9722b6]', // Purple
-    'C#': 'bg-[#9722b6]', // Purple
-    'D': 'bg-[#fe5b35]', // Orange
-    'D#': 'bg-[#fe5b35]', // Orange
-    'E': 'bg-[#eb3d5f]', // Pink
-    'F': 'bg-[#9722b6]', // Purple
-    'F#': 'bg-[#9722b6]', // Purple
-    'G': 'bg-[#fe5b35]', // Orange
-    'G#': 'bg-[#fe5b35]', // Orange
-    'A': 'bg-[#eb3d5f]', // Pink
-    'A#': 'bg-[#eb3d5f]', // Pink
-    'B': 'bg-[#9722b6]' // Purple
+    'C': 'bg-[#9722b6]',
+    'C#': 'bg-[#9722b6]',
+    'D': 'bg-[#fe5b35]',
+    'D#': 'bg-[#fe5b35]',
+    'E': 'bg-[#eb3d5f]',
+    'F': 'bg-[#9722b6]',
+    'F#': 'bg-[#9722b6]',
+    'G': 'bg-[#fe5b35]',
+    'G#': 'bg-[#fe5b35]',
+    'A': 'bg-[#eb3d5f]',
+    'A#': 'bg-[#eb3d5f]',
+    'B': 'bg-[#9722b6]'
   };
-
   return colorMap[baseNote] || 'bg-gray-500';
 };
 
-// Convert frequency to note name
+// Convert a frequency to a note string using logarithms
 const frequencyToNote = (frequency: number): string => {
   const noteNum = 12 * (Math.log2(frequency / 440) + 4);
   const note = Math.round(noteNum);
@@ -120,21 +101,61 @@ const frequencyToNote = (frequency: number): string => {
   return `${noteName}${octave}`;
 };
 
-// Check if two notes match (same base note, octave can be different)
+// Compare two notes by their base note (ignoring the octave)
 const notesMatch = (note1: string, note2: string): boolean => {
-  const baseNote1 = note1.replace(EXTRACT_OCTAVE, '');
-  const baseNote2 = note2.replace(EXTRACT_OCTAVE, '');
-  return baseNote1 === baseNote2;
+  const baseNote1 = note1.replace(/\d+$/, '').toUpperCase();
+  const baseNote2 = note2.replace(/\d+$/, '').toUpperCase();
+  console.log(`Comparing: ${note1} (${baseNote1}) vs ${note2} (${baseNote2})`);
+  const match = baseNote1 === baseNote2;
+  console.log(`Result: ${match}`);
+  return match;
 };
 
-// Keyboard mapping for notes
+// Calculate the distance between two notes in cents
+const getNoteDistanceInCents = (note1: string, note2: string): number => {
+  const baseNote1 = note1.replace(EXTRACT_OCTAVE, '');
+  const baseNote2 = note2.replace(EXTRACT_OCTAVE, '');
+  const octave1 = parseInt(note1.match(EXTRACT_OCTAVE)?.[0] || '4');
+  const octave2 = parseInt(note2.match(EXTRACT_OCTAVE)?.[0] || '4');
+  const noteValues: Record<string, number> = {
+    'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5, 
+    'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+  };
+  const semitoneDiff = (octave2 - octave1) * 12 + (noteValues[baseNote2] - noteValues[baseNote1]);
+  return semitoneDiff * 100;
+};
+
+// Find the closest available pitch for a detected note
+const findClosestPitch = (detectedPitch: string): string => {
+  const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  if (availablePitches.includes(detectedPitch)) return detectedPitch;
+  const match = detectedPitch.match(/([A-G]#?)(\d+)/);
+  if (!match) return "C4";
+  const [, note, octave] = match;
+  let closestPitch = availablePitches[0];
+  let minDistance = Number.MAX_VALUE;
+  for (const pitch of availablePitches) {
+    const result = pitch.match(/([A-G]#?)(\d+)/);
+    if (!result) continue;
+    const [, pNote, pOctave] = result;
+    const noteIndex = noteNames.indexOf(note);
+    const pNoteIndex = noteNames.indexOf(pNote);
+    const distance = Math.abs((parseInt(pOctave) - parseInt(octave)) * 12 + (pNoteIndex - noteIndex));
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestPitch = pitch;
+    }
+  }
+  return closestPitch;
+};
+
 const KEYBOARD_MAPPING: Record<string, string> = {
-  'a': 'E2', // 6th string (low E)
-  's': 'A2', // 5th string (A)
-  'd': 'D3', // 4th string (D)
-  'f': 'G3', // 3rd string (G)
-  'g': 'B3', // 2nd string (B)
-  'h': 'E4'  // 1st string (high E)
+  'a': 'E2',
+  's': 'A2',
+  'd': 'D3',
+  'f': 'G3',
+  'g': 'B3',
+  'h': 'E4'
 };
 
 export default function GuitarFretboardVisualizer() {
@@ -142,7 +163,6 @@ export default function GuitarFretboardVisualizer() {
   const notesParam = searchParams.get('notes');
   const bpmParam = searchParams.get('bpm');
   
-  // Parse notes and BPM from URL parameters
   const initialNotes = notesParam ? JSON.parse(decodeURIComponent(notesParam)) : ['E4', 'G4', 'B4', 'E5', 'D5', 'B4'];
   const initialTempo = bpmParam ? parseInt(decodeURIComponent(bpmParam)) : 120;
   
@@ -158,7 +178,6 @@ export default function GuitarFretboardVisualizer() {
   const [showResults, setShowResults] = useState(false);
   const [nextNoteIndex, setNextNoteIndex] = useState(-1);
   const [lastKeyPressTime, setLastKeyPressTime] = useState(0);
-  const [keyCooldown, setKeyCooldown] = useState(false);
   const [scoredNotes, setScoredNotes] = useState<Set<number>>(new Set());
   
   const synthRef = useRef<Tone.Synth<Tone.SynthOptions> | null>(null);
@@ -171,84 +190,89 @@ export default function GuitarFretboardVisualizer() {
   const lastPlayedNoteRef = useRef<string | null>(null);
   const lastPlayedTimeRef = useRef<number>(0);
   const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [currentDetectedNote, setCurrentDetectedNote] = useState<string | null>(null);
+  const [detectionClarity, setDetectionClarity] = useState<number>(0);
+  const [lastDetectionTime, setLastDetectionTime] = useState<number>(0);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const detectorRef = useRef<Pitchy.PitchDetector<Float32Array> | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const audioContextClosedRef = useRef<boolean>(false);
+  const [currentScoringNote, setCurrentScoringNote] = useState<string | null>(null);
+  const [lastScoredTime, setLastScoredTime] = useState<number>(0);
+  const [waitingForNewNote, setWaitingForNewNote] = useState<boolean>(false);
 
-  // Initialize Tone.js synth
+  // Create refs for state variables used in the audio process callback
+  const modeRef = useRef(mode);
+  useEffect(() => { modeRef.current = mode; }, [mode]);
+
+  const isPlayingRef = useRef(isPlaying);
+  useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
+
+  const currentNoteIndexRef = useRef(currentNoteIndex);
+  useEffect(() => { currentNoteIndexRef.current = currentNoteIndex; }, [currentNoteIndex]);
+
+  const waitingForNewNoteRef = useRef(waitingForNewNote);
+  useEffect(() => { waitingForNewNoteRef.current = waitingForNewNote; }, [waitingForNewNote]);
+
+  const scoredNotesRef = useRef(scoredNotes);
+  useEffect(() => { scoredNotesRef.current = scoredNotes; }, [scoredNotes]);
+
+  const notesRef = useRef(notes);
+  useEffect(() => { notesRef.current = notes; }, [notes]);
+
+  const totalNotesRef = useRef(totalNotes);
+  useEffect(() => { totalNotesRef.current = totalNotes; }, [totalNotes]);
+
+  useEffect(() => {
+    if (notesParam) {
+      const parsedNotes = JSON.parse(decodeURIComponent(notesParam));
+      setNotes(parsedNotes);
+    }
+  }, [notesParam]);
+
   useEffect(() => {
     synthRef.current = new Tone.Synth().toDestination();
-
     return () => {
-      if (sequenceRef.current) {
-        sequenceRef.current.dispose();
-      }
-      if (synthRef.current) {
-        synthRef.current.dispose();
-      }
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
+      if (sequenceRef.current) sequenceRef.current.dispose();
+      if (synthRef.current) synthRef.current.dispose();
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
   }, []);
 
-  // Set up responsive fretboard width
   useEffect(() => {
     const updateWidth = () => {
       if (fretboardRef.current) {
         setFretboardWidth(fretboardRef.current.clientWidth);
       }
     };
-
-    // Initial width setup
     updateWidth();
-
-    // Listen for resize events
     window.addEventListener('resize', updateWidth);
-
-    return () => {
-      window.removeEventListener('resize', updateWidth);
-    };
+    return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
-  // Handle keyboard input for keyboard mode
+  // Handle keyboard input (Keyboard mode)
   useEffect(() => {
     if (mode !== 'keyboard' || !isPlaying) return;
-
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
       const now = Date.now();
-      
-      // Allow key presses but enforce a small cooldown to prevent excessive events
-      if (now - lastKeyPressTime < 100) {
-        return;
-      }
-      
+      if (now - lastKeyPressTime < 100) return;
       if (KEYBOARD_MAPPING[key] && currentNoteIndex >= 0) {
         setLastKeyPressTime(now);
-        
         const playedNote = KEYBOARD_MAPPING[key];
         const targetNote = notes[currentNoteIndex];
-        
-        // Check if the played note matches the target note
         if (notesMatch(playedNote, targetNote)) {
-          // Only award points if this note hasn't been scored yet
-          if (!scoredNotes.has(currentNoteIndex)) {
-            setScore(prev => Math.min(prev + 1, totalNotes));
-            setScoredNotes(prev => {
-              const newSet = new Set(prev);
-              newSet.add(currentNoteIndex);
-              return newSet;
-            });
-            setFeedback('Correct! +1 point');
-          } else {
-            setFeedback('Correct! (already scored)');
-          }
+          setScore(prev => Math.min(prev + 1, totalNotes));
+          setScoredNotes(prev => {
+            const newSet = new Set(prev);
+            newSet.add(currentNoteIndex);
+            return newSet;
+          });
+          setFeedback('Correct! +1 point');
           setTimeout(() => setFeedback(''), 1000);
         } else {
-          // Only deduct points if the note hasn't been scored yet
           if (!scoredNotes.has(currentNoteIndex)) {
-            setScore(prev => Math.max(0, prev - 1));
+            setScore(prev => Math.max(prev - 1, 0));
             setFeedback('Wrong key! -1 point');
           } else {
             setFeedback('Wrong key! (already scored)');
@@ -257,91 +281,11 @@ export default function GuitarFretboardVisualizer() {
         }
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mode, isPlaying, currentNoteIndex, notes, lastKeyPressTime, totalNotes, scoredNotes]);
 
-  // Set up audio context and pitch detection for guitar mode
-  const setupAudioContext = async () => {
-    try {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      }
-      
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const source = audioContextRef.current.createMediaStreamSource(stream);
-      
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      analyserRef.current.fftSize = 2048;
-      source.connect(analyserRef.current);
-      
-      setIsListening(true);
-      detectPitch();
-    } catch (error) {
-      console.error('Error setting up audio context:', error);
-      setFeedback('Error accessing microphone. Please check permissions.');
-    }
-  };
-
-  // Detect pitch from audio input
-  const detectPitch = () => {
-    if (!isListening || !analyserRef.current) return;
-    
-    // Simple pitch detection using autocorrelation
-    const bufferLength = analyserRef.current.frequencyBinCount;
-    const dataArray = new Float32Array(bufferLength);
-    analyserRef.current.getFloatTimeDomainData(dataArray);
-    
-    // Find the fundamental frequency using autocorrelation
-    let sum = 0;
-    let maxSum = 0;
-    let maxIndex = 0;
-    
-    for (let lag = 0; lag < bufferLength / 2; lag++) {
-      sum = 0;
-      for (let i = 0; i < bufferLength - lag; i++) {
-        sum += dataArray[i] * dataArray[i + lag];
-      }
-      if (sum > maxSum) {
-        maxSum = sum;
-        maxIndex = lag;
-      }
-    }
-    
-    // Convert lag to frequency
-    const frequency = audioContextRef.current!.sampleRate / maxIndex;
-    
-    // Only process if we have a reasonable frequency
-    if (frequency > 20 && frequency < 2000 && currentNoteIndex >= 0) {
-      const detectedNote = frequencyToNote(frequency);
-      
-      // Only process a new note after a short delay to avoid duplicates
-      const now = Date.now();
-      if (detectedNote !== lastPlayedNoteRef.current || now - lastPlayedTimeRef.current > 500) {
-        lastPlayedNoteRef.current = detectedNote;
-        lastPlayedTimeRef.current = now;
-        
-        const targetNote = notes[currentNoteIndex];
-        
-        // Check if the detected note matches the target note
-        if (notesMatch(detectedNote, targetNote)) {
-          setScore(prev => prev + 1);
-          setFeedback('Correct!');
-          setTimeout(() => setFeedback(''), 1000);
-        } else {
-          setFeedback(`Detected: ${detectedNote}, Target: ${targetNote}`);
-          setTimeout(() => setFeedback(''), 1000);
-        }
-      }
-    }
-    
-    animationFrameRef.current = requestAnimationFrame(detectPitch);
-  };
-
-  // Play the sequence of notes
+  // Play note sequence using Tone.js
   const playSequence = () => {
     if (isPlaying) {
       Tone.Transport.stop();
@@ -351,45 +295,29 @@ export default function GuitarFretboardVisualizer() {
       setNextNoteIndex(-1);
       setIsListening(false);
       setShowResults(false);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      if (previewTimeoutRef.current) {
-        clearTimeout(previewTimeoutRef.current);
-      }
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
       return;
     }
-
     setIsPlaying(true);
     setScore(0);
     setTotalNotes(notes.length);
-    setScoredNotes(new Set()); // Reset scored notes
+    setScoredNotes(new Set());
     setShowResults(false);
-
-    // Set the tempo
+    setCurrentScoringNote(null);
+    setLastScoredTime(0);
+    setWaitingForNewNote(false);
     Tone.Transport.bpm.value = tempo;
+    setTempo(tempo);
 
-    // Create a sequence
     const noteEvents = notes.map((_: string, i: number) => i);
+    if (sequenceRef.current) sequenceRef.current.dispose();
 
-    if (sequenceRef.current) {
-      sequenceRef.current.dispose();
-    }
-
-    // Function to show preview of next note
     const showNextNotePreview = (index: number) => {
       if (index < notes.length - 1) {
         setNextNoteIndex(index + 1);
-        
-        // Clear any existing timeout
-        if (previewTimeoutRef.current) {
-          clearTimeout(previewTimeoutRef.current);
-        }
-        
-        // Set a timeout to clear the preview before the note plays
-        previewTimeoutRef.current = setTimeout(() => {
-          setNextNoteIndex(-1);
-        }, 500);
+        if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
+        previewTimeoutRef.current = setTimeout(() => setNextNoteIndex(-1), 500);
       }
     };
 
@@ -397,18 +325,14 @@ export default function GuitarFretboardVisualizer() {
       (time, index) => {
         setCurrentNoteIndex(index);
         synthRef.current?.triggerAttackRelease(notes[index], '8n', time);
-        
-        // Show preview of next note
         showNextNotePreview(index);
+        setWaitingForNewNote(false);
       },
       noteEvents,
       '4n'
     ).start(0);
 
-    // Start the transport
     Tone.Transport.start();
-
-    // Stop after playing all notes
     Tone.Transport.scheduleOnce(() => {
       Tone.Transport.stop();
       setIsPlaying(false);
@@ -416,344 +340,411 @@ export default function GuitarFretboardVisualizer() {
       setNextNoteIndex(-1);
       sequenceRef.current?.dispose();
       setIsListening(false);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      if (previewTimeoutRef.current) {
-        clearTimeout(previewTimeoutRef.current);
-      }
-      
-      // Show results screen only in keyboard or guitar mode
-      if (mode !== 'visualize') {
-        setShowResults(true);
-      }
-    }, `+${notes.length * (60 / tempo)}`)
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
+      if (mode !== 'visualize') setShowResults(true);
+    }, `+${notes.length * (60 / tempo)}`);
   };
 
-  // Start guitar mode
+  // Set up pitch detection for Guitar mode
+  const startPitchDetection = async () => {
+    try {
+      audioContextClosedRef.current = false;
+      let AudioContextClass: typeof AudioContext;
+      if (window.AudioContext) {
+        AudioContextClass = window.AudioContext;
+      } else if ((window as any).webkitAudioContext) {
+        AudioContextClass = (window as any).webkitAudioContext;
+      } else {
+        throw new Error('AudioContext not supported');
+      }
+      if (!audioContextRef.current || audioContextClosedRef.current) {
+        const audioContext = new AudioContextClass();
+        audioContextRef.current = audioContext;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } 
+      });
+      streamRef.current = stream;
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      const bufferSize = 2048;
+      const processor = audioContextRef.current.createScriptProcessor(bufferSize, 1, 1);
+      const sampleRate = audioContextRef.current.sampleRate;
+      const detector = Pitchy.PitchDetector.forFloat32Array(bufferSize);
+      detectorRef.current = detector;
+      
+      processor.onaudioprocess = (e) => {
+        if (!detectorRef.current) return;
+        const input = new Float32Array(detectorRef.current.inputLength);
+        e.inputBuffer.copyFromChannel(input, 0);
+        const [pitch, clarity] = detectorRef.current.findPitch(input, sampleRate);
+        
+        // Use a slightly lower clarity threshold (0.7) for better detection
+        if (clarity > 0.7 && pitch > 0) {
+          const note = frequencyToNote(pitch);
+          const detectedPitch = findClosestPitch(note);
+          setCurrentDetectedNote(detectedPitch);
+          setDetectionClarity(clarity);
+          setLastDetectionTime(Date.now());
+          
+          // Use refs to ensure the latest state values are read here
+          if (modeRef.current === 'guitar' && isPlayingRef.current && currentNoteIndexRef.current >= 0) {
+            const expectedNote = notesRef.current[currentNoteIndexRef.current];
+            const isNoteMatch = notesMatch(detectedPitch, expectedNote);
+            console.log(`Detected: ${detectedPitch}, Expected: ${expectedNote}, Match: ${isNoteMatch}`);
+            const now = Date.now();
+            if (isNoteMatch && !waitingForNewNoteRef.current) {
+              if (!scoredNotesRef.current.has(currentNoteIndexRef.current)) {
+                setScore(prev => Math.min(prev + 1, totalNotesRef.current));
+                setFeedback(`Correct! ${detectedPitch} matches ${expectedNote}`);
+                setScoredNotes(prev => {
+                  const newSet = new Set(prev);
+                  newSet.add(currentNoteIndexRef.current);
+                  return newSet;
+                });
+              } else {
+                setFeedback('Correct note, but already scored!');
+              }
+              setCurrentScoringNote(detectedPitch);
+              setLastScoredTime(now);
+              waitingForNewNoteRef.current = true;
+              setWaitingForNewNote(true);
+              setTimeout(() => {
+                waitingForNewNoteRef.current = false;
+                setWaitingForNewNote(false);
+              }, 500);
+            } else if (!isNoteMatch && !waitingForNewNoteRef.current) {
+              if (!scoredNotesRef.current.has(currentNoteIndexRef.current)) {
+                setScore(prev => Math.max(prev - 1, 0));
+                setFeedback(`Wrong note! -1 point (detected: ${detectedPitch}, expected: ${expectedNote})`);
+              } else {
+                setFeedback(`Wrong note! (already scored)`);
+              }
+            }
+          }
+        } else {
+          setCurrentDetectedNote(null);
+          setDetectionClarity(0);
+        }
+      };
+      
+      source.connect(processor);
+      processor.connect(audioContextRef.current.destination);
+      processorRef.current = processor;
+      setIsListening(true);
+    } catch (error) {
+      console.error("Error starting pitch detection:", error);
+      setFeedback("Error starting microphone. Please check permissions.");
+    }
+  };
+
   const startGuitarMode = async () => {
     setMode('guitar');
-    await setupAudioContext();
+    await startPitchDetection();
   };
 
-  // Get current positions for highlighting
-  const currentPositions = currentNoteIndex >= 0
-    ? getAllPositionsForNote(notes[currentNoteIndex])
-    : [];
+  const stopPitchDetection = () => {
+    if (processorRef.current) {
+      processorRef.current.disconnect();
+      processorRef.current = null;
+    }
+    if (audioContextRef.current && !audioContextClosedRef.current) {
+      try {
+        audioContextRef.current.close();
+        audioContextClosedRef.current = true;
+      } catch (error) {
+        console.error("Error closing AudioContext:", error);
+      }
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    setIsListening(false);
+    setCurrentDetectedNote(null);
+    setDetectionClarity(0);
+  };
 
-  // Get next note positions for preview
-  const nextNotePositions = nextNoteIndex >= 0
-    ? getAllPositionsForNote(notes[nextNoteIndex])
-    : [];
+  useEffect(() => {
+    return () => {
+      stopPitchDetection();
+    };
+  }, []);
 
-  // Get the color for the current note
-  const currentNoteColor = currentNoteIndex >= 0
-    ? getNoteColor(notes[currentNoteIndex])
-    : '';
+  const handleModeChange = (newMode: 'visualize' | 'keyboard' | 'guitar') => {
+    setMode(newMode);
+    if (newMode === 'guitar') {
+      startPitchDetection();
+    } else {
+      stopPitchDetection();
+    }
+  };
 
-  // Get the color for the next note
-  const nextNoteColor = nextNoteIndex >= 0
-    ? getNoteColor(notes[nextNoteIndex])
-    : '';
-
-  // get the display name for the current note (without octave)
-  const currentNoteDisplayName = currentNoteIndex >= 0
-    ? notes[currentNoteIndex].replace(EXTRACT_OCTAVE, '')
-    : '';
-
-  // get the display name for the next note (without octave)
-  const nextNoteDisplayName = nextNoteIndex >= 0
-    ? notes[nextNoteIndex].replace(EXTRACT_OCTAVE, '')
-    : '';
-
-  // Calculate fret spacing
-  const labelWidth = 40; // Width for string labels
+  const currentPositions = currentNoteIndex >= 0 ? getAllPositionsForNote(notes[currentNoteIndex]) : [];
+  const nextNotePositions = nextNoteIndex >= 0 ? getAllPositionsForNote(notes[nextNoteIndex]) : [];
+  const currentNoteColor = currentNoteIndex >= 0 ? getNoteColor(notes[currentNoteIndex]) : '';
+  const nextNoteColor = nextNoteIndex >= 0 ? getNoteColor(notes[nextNoteIndex]) : '';
+  const currentNoteDisplayName = currentNoteIndex >= 0 ? notes[currentNoteIndex].replace(EXTRACT_OCTAVE, '') : '';
+  const nextNoteDisplayName = nextNoteIndex >= 0 ? notes[nextNoteIndex].replace(EXTRACT_OCTAVE, '') : '';
+  const labelWidth = 40;
   const availableWidth = fretboardWidth ? fretboardWidth - labelWidth : 0;
-  const fretSpacing = availableWidth / (FRET_COUNT + 1); // +1 to include the nut
-
-  // ui snip that displays info abt. current note playing 
-  const currentNoteDisplay = currentNoteIndex >= 0 && (
-    <div className="mb-4 text-center">
-      <div className="text-xl font-bold mb-1 text-gray-700">
-        Currently Playing:
-        <span className={`ml-2 px-3 py-1 rounded-full text-white ${currentNoteColor}`}>
-          {notes[currentNoteIndex]}
-        </span>
-      </div>
-      <div className="text-sm text-gray-500">
-        {currentPositions.length} position{currentPositions.length !== 1 ? 's' : ''} on the fretboard
-      </div>
-      {nextNoteIndex >= 0 && (
-        <div className="mt-2 text-sm text-gray-600">
-          Next: <span className={`px-2 py-0.5 rounded-full text-white ${nextNoteColor}`}>{notes[nextNoteIndex]}</span>
-        </div>
-      )}
-      {feedback && (
-        <div className={`mt-2 text-lg font-bold ${feedback.includes('Correct') ? 'text-[#9722b6]' : 'text-[#fe5b35]'}`}>
-          {feedback}
-        </div>
-      )}
-      {mode !== 'visualize' && (
-        <div className="mt-2 text-lg font-bold text-gray-700">
-          Score: {score}/{totalNotes}
-        </div>
-      )}
-    </div>
-  )
-
-  // Results screen
-  const resultsScreen = showResults && (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">Results</h2>
-        
-        <div className="mb-6 text-center">
-          <div className="text-4xl font-bold text-[#eb3d5f] mb-2">{score}/{totalNotes}</div>
-          <div className="text-gray-600">
-            {score === totalNotes ? 'Perfect!' : 
-             score >= totalNotes * 0.8 ? 'Great job!' : 
-             score >= totalNotes * 0.6 ? 'Good effort!' : 
-             'Keep practicing!'}
-          </div>
-        </div>
-        
-        <div className="flex justify-center">
-          <button
-            onClick={playSequence}
-            className="px-6 py-2 bg-[#9722b6] text-white rounded-md font-bold hover:bg-[#7a1b92] transition-colors"
-          >
-            Play Again
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  const fretSpacing = availableWidth / (FRET_COUNT + 1);
 
   return (
-    <div className="flex flex-col items-center p-4 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold mb-4 text-gray-700">Guitar Fretboard Visualizer</h1>
-      
-      {/* Mode Selection */}
-      <div className="w-full bg-white p-4 rounded-lg shadow-md mb-6">
-        <h2 className="text-xl font-bold mb-4 text-gray-700">Select Mode</h2>
-        <div className="flex gap-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-4xl bg-white rounded-xl shadow-lg p-6">
+        <h1 className="text-3xl font-bold mb-6 text-center text-gradient bg-gradient-to-r from-[#9722b6] via-[#fe5b35] to-[#eb3d5f] text-transparent bg-clip-text">
+          Play Your Riff
+        </h1>
+        
+        {/* Mode Selection */}
+        <div className="mb-6 flex justify-center space-x-4">
           <button
-            onClick={() => setMode('visualize')}
-            className={`flex-1 px-4 py-2 rounded-md font-bold transition-colors ${
-              mode === 'visualize' ? 'bg-[#9722b6] text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+            onClick={() => handleModeChange('visualize')}
+            className={`px-4 py-2 rounded-lg ${mode === 'visualize' ? 'bg-[#9722b6] text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
           >
             Visualize
           </button>
           <button
-            onClick={() => setMode('keyboard')}
-            className={`flex-1 px-4 py-2 rounded-md font-bold transition-colors ${
-              mode === 'keyboard' ? 'bg-[#9722b6] text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+            onClick={() => handleModeChange('keyboard')}
+            className={`px-4 py-2 rounded-lg ${mode === 'keyboard' ? 'bg-[#9722b6] text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
           >
             Keyboard Mode
           </button>
           <button
-            onClick={startGuitarMode}
-            className={`flex-1 px-4 py-2 rounded-md font-bold transition-colors ${
-              mode === 'guitar' ? 'bg-[#9722b6] text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+            onClick={() => handleModeChange('guitar')}
+            className={`px-4 py-2 rounded-lg ${mode === 'guitar' ? 'bg-[#9722b6] text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
           >
             Guitar Mode
           </button>
         </div>
-      </div>
-      
-      {currentNoteDisplay}
-
-      {/* Fretboard */}
-      <div className="w-full mb-6 bg-white p-4 rounded-lg shadow-md">
-        {/* Full Fretboard with Responsive Width */}
-        <div className="relative w-full" ref={fretboardRef}>
-          {/* Vertical fret lines - Now drawn first and continuously */}
-          <div className="relative mb-2" style={{ height: '220px' }}>
-            {/* Nut - thicker first vertical line */}
-            <div
-              className="absolute top-0 bottom-0 w-1 bg-gray-800 z-10"
-              style={{ left: `${labelWidth}px` }}
-            ></div>
-
-            {/* Fret lines - continuous vertical lines */}
-            {[...Array(FRET_COUNT)].map((_, fretIndex) => (
-              <div
-                key={fretIndex}
-                className="absolute top-0 bottom-0 w-px bg-gray-300 z-10"
-                style={{ left: `${labelWidth + fretSpacing * (fretIndex + 1)}px` }}
-              ></div>
-            ))}
-
-            {/* Fret markers (dots) */}
-            {[3, 5, 7, 9, 12, 15, 17, 19, 21, 24].map((fretIndex) => (
-              <div
-                key={fretIndex}
-                className="absolute w-4 h-4 bg-gray-200 border border-gray-300 rounded-full z-5"
-                style={{
-                  left: `${labelWidth + fretSpacing * fretIndex - fretSpacing / 2}px`,
-                  bottom: fretIndex === 12 || fretIndex === 24 ? '20px' : '10px'
-                }}
-              ></div>
-            ))}
-
-            {/* Double dots at 12th and 24th fret */}
-            {[12, 24].map((fretIndex) => (
-              <div
-                key={`double-${fretIndex}`}
-                className="absolute w-4 h-4 bg-gray-200 border border-gray-300 rounded-full z-5"
-                style={{
-                  left: `${labelWidth + fretSpacing * fretIndex - fretSpacing / 2}px`,
-                  bottom: '40px'
-                }}
-              ></div>
-            ))}
-
-            {/* Strings and Notes */}
-            {STANDARD_TUNING.map((stringNote, stringIndex) => (
-              <div
-                key={stringIndex}
-                className="absolute w-full"
-                style={{ top: `${stringIndex * 36 + 10}px` }}
-              >
-                {/* String label */}
-                <div className="absolute left-0 text-center font-bold text-gray-700" style={{ width: `${labelWidth}px` }}>
-                  {stringNote.replace(/\d+$/, '')}
+        
+        {/* Mode Instructions */}
+        <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+          <h3 className="font-semibold text-blue-800 mb-2">
+            {mode === 'visualize' 
+              ? 'Visualization Mode' 
+              : mode === 'keyboard' 
+                ? 'Keyboard Mode Instructions' 
+                : 'Guitar Mode Instructions'}
+          </h3>
+          <p className="text-blue-700">
+            {mode === 'visualize' 
+              ? 'Watch and listen to the notes being played.' 
+              : mode === 'keyboard' 
+                ? 'Use your keyboard to play the notes as they appear. Press the corresponding key when a note is highlighted.' 
+                : 'Play the notes on your guitar as they appear. The app will listen and detect the notes you play.'}
+          </p>
+        </div>
+        
+        {/* Keyboard Bindings */}
+        {mode === 'keyboard' && (
+          <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+            <h3 className="font-semibold text-yellow-800 mb-2">Keyboard Bindings</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {Object.entries(KEYBOARD_MAPPING).map(([key, note]) => (
+                <div key={key} className="flex items-center">
+                  <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center mr-2 font-bold text-gray-700">
+                    {key.toUpperCase()}
+                  </div>
+                  <div className={`w-8 h-8 ${getNoteColor(note)} rounded-full flex items-center justify-center text-white font-bold`}>
+                    {note.replace(EXTRACT_OCTAVE, '')}
+                  </div>
+                  <span className="ml-2 text-sm text-gray-600">{note}</span>
                 </div>
-
-                {/* Actual String Line - continuous across all frets */}
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Guitar Mode Display */}
+        {mode === 'guitar' && (
+          <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex flex-col space-y-3">
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="text-gray-700 font-medium">Detected Note: </span>
+                  <span className="text-green-600 font-bold text-xl">
+                    {currentDetectedNote || 'No note detected'}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <span className="text-gray-700 mr-2">Clarity:</span>
+                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-green-500 transition-all duration-100"
+                      style={{ width: `${detectionClarity * 100}%` }}
+                    ></div>
+                  </div>
+                  <span className="ml-2 text-gray-600">{Math.round(detectionClarity * 100)}%</span>
+                </div>
+              </div>
+              <div className="flex items-center">
+                <div className={`w-3 h-3 rounded-full mr-2 ${isListening ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+                <span className="text-sm text-gray-600">
+                  {isListening ? 'Microphone active - Listening for notes...' : 'Microphone inactive'}
+                </span>
+              </div>
+              {lastDetectionTime > 0 && (
+                <div className="text-xs text-gray-500">
+                  Last detection: {new Date(lastDetectionTime).toLocaleTimeString()}
+                </div>
+              )}
+              {isPlaying && currentNoteIndex >= 0 && (
+                <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
+                  <span className="text-gray-700 font-medium">Expected Note: </span>
+                  <span className="text-blue-600 font-bold text-xl">
+                    {notes[currentNoteIndex]}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Fretboard */}
+        <div className="mb-6">
+          <div className="relative w-full" ref={fretboardRef}>
+            <div className="relative mb-2" style={{ height: '220px' }}>
+              <div className="absolute top-0 bottom-0 w-1 bg-gray-800 z-10" style={{ left: `${labelWidth}px` }}></div>
+              {[...Array(FRET_COUNT)].map((_, fretIndex) => (
                 <div
-                  className={`absolute h-px ${stringIndex < 3 ? 'bg-gray-500' : 'bg-gray-400'} z-1`}
-                  style={{ left: `${labelWidth}px`, right: '0' }}
+                  key={fretIndex}
+                  className="absolute top-0 bottom-0 w-px bg-gray-300 z-10"
+                  style={{ left: `${labelWidth + fretSpacing * (fretIndex + 1)}px` }}
                 ></div>
-
-                {/* Current Note positions for this string */}
-                {currentPositions
-                  .filter(pos => pos.stringIndex === stringIndex)
-                  .map(pos => {
-                    // Ensure the fret position is valid
+              ))}
+              {[3, 5, 7, 9, 12, 15, 17, 19, 21, 24].map((fretIndex) => (
+                <div
+                  key={fretIndex}
+                  className="absolute w-4 h-4 bg-gray-200 border border-gray-300 rounded-full z-5"
+                  style={{ left: `${labelWidth + fretSpacing * fretIndex - fretSpacing / 2}px`, bottom: fretIndex === 12 || fretIndex === 24 ? '20px' : '10px' }}
+                ></div>
+              ))}
+              {[12, 24].map((fretIndex) => (
+                <div
+                  key={`double-${fretIndex}`}
+                  className="absolute w-4 h-4 bg-gray-200 border border-gray-300 rounded-full z-5"
+                  style={{ left: `${labelWidth + fretSpacing * fretIndex - fretSpacing / 2}px`, bottom: '40px' }}
+                ></div>
+              ))}
+              {STANDARD_TUNING.map((stringNote, stringIndex) => (
+                <div key={stringIndex} className="absolute w-full" style={{ top: `${stringIndex * 36 + 10}px` }}>
+                  <div className="absolute left-0 text-center font-bold text-gray-700" style={{ width: `${labelWidth}px` }}>
+                    {stringNote.replace(/\d+$/, '')}
+                  </div>
+                  <div className={`absolute h-px ${stringIndex < 3 ? 'bg-gray-500' : 'bg-gray-400'} z-1`} style={{ left: `${labelWidth}px`, right: '0' }}></div>
+                  {currentPositions.filter(pos => pos.stringIndex === stringIndex).map(pos => {
                     const validFret = Math.max(0, Math.min(pos.fret, FRET_COUNT));
                     return (
                       <div
                         key={`${stringIndex}-${validFret}`}
                         className={`absolute w-8 h-8 ${currentNoteColor} rounded-full flex items-center justify-center z-20 shadow-md`}
-                        style={{
-                          left: `${labelWidth + (validFret * fretSpacing) - 16}px`,
-                          top: '-16px' // Center vertically on the string
-                        }}
+                        style={{ left: `${labelWidth + validFret * fretSpacing - 16}px`, top: '-16px' }}
                       >
-                        <span className="text-white text-xs font-bold">
-                          {currentNoteDisplayName}
-                        </span>
+                        <span className="text-white text-xs font-bold">{currentNoteDisplayName}</span>
                       </div>
                     );
-                  })
-                }
-                
-                {/* Next Note positions for this string (preview) */}
-                {nextNotePositions
-                  .filter(pos => pos.stringIndex === stringIndex)
-                  .map(pos => {
-                    // Ensure the fret position is valid
+                  })}
+                  {nextNotePositions.filter(pos => pos.stringIndex === stringIndex).map(pos => {
                     const validFret = Math.max(0, Math.min(pos.fret, FRET_COUNT));
                     return (
                       <div
                         key={`next-${stringIndex}-${validFret}`}
                         className={`absolute w-6 h-6 ${nextNoteColor} rounded-full flex items-center justify-center z-15 shadow-md opacity-70`}
-                        style={{
-                          left: `${labelWidth + (validFret * fretSpacing) - 12}px`,
-                          top: '-12px' // Center vertically on the string
-                        }}
+                        style={{ left: `${labelWidth + validFret * fretSpacing - 12}px`, top: '-12px' }}
                       >
-                        <span className="text-white text-xs font-bold">
-                          {nextNoteDisplayName}
-                        </span>
+                        <span className="text-white text-xs font-bold">{nextNoteDisplayName}</span>
                       </div>
                     );
-                  })
-                }
-              </div>
-            ))}
-          </div>
-
-          {/* Fret numbers - responsive spacing */}
-          <div className="flex mt-4 overflow-x-auto" style={{ paddingLeft: `${labelWidth}px` }}>
-            {[...Array(FRET_COUNT + 1)].map((_, fretIndex) => (
-              <div
-                key={fretIndex}
-                className="text-center text-xs flex-shrink-0 text-gray-600"
-                style={{ width: `${fretSpacing}px` }}
-              >
-                {fretIndex}
-              </div>
-            ))}
+                  })}
+                </div>
+              ))}
+            </div>
+            <div className="flex mt-4 overflow-x-auto" style={{ paddingLeft: `${labelWidth}px` }}>
+              {[...Array(FRET_COUNT + 1)].map((_, fretIndex) => (
+                <div key={fretIndex} className="text-center text-xs flex-shrink-0 text-gray-600" style={{ width: `${fretSpacing}px` }}>
+                  {fretIndex}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Controls */}
-      <div className="w-full bg-white p-4 rounded-lg shadow-md mb-6">
-        <div className="mb-2">
+        
+        {/* Play Controls */}
+        <div className="mb-6 flex justify-center">
           <button
             onClick={playSequence}
-            className={`px-4 py-2 rounded-md font-bold w-full transition-colors ${isPlaying ? 'bg-[#9722b6] hover:bg-[#7a1b92] text-white' : 'bg-[#fe5b35] hover:bg-[#e54a24] text-white'
-              }`}
+            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center"
           >
-            {isPlaying ? 'Stop' : 'Play Sequence'}
+            {isPlaying ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                Stop
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                </svg>
+                Play
+              </>
+            )}
           </button>
         </div>
-      </div>
-
-      {/* Keyboard Guide (only shown in keyboard mode) */}
-      {mode === 'keyboard' && (
-        <div className="w-full bg-white p-4 rounded-lg shadow-md mb-6">
-          <h2 className="text-xl font-bold mb-4 text-gray-700">Keyboard Guide</h2>
-          <div className="grid grid-cols-6 gap-2">
-            {Object.entries(KEYBOARD_MAPPING).map(([key, note]) => (
-              <div key={key} className="flex flex-col items-center">
-                <div className={`w-12 h-12 rounded-md flex items-center justify-center ${getNoteColor(note)} text-white font-bold`}>
-                  {key.toUpperCase()}
-                </div>
-                <div className="text-sm text-gray-600 mt-1">{note}</div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 text-center text-gray-600">
-            <p>Press the key corresponding to the string where the note appears</p>
-          </div>
-        </div>
-      )}
-
-      {/* Guitar Mode Instructions */}
-      {mode === 'guitar' && (
-        <div className="w-full bg-white p-4 rounded-lg shadow-md mb-6">
-          <h2 className="text-xl font-bold mb-4 text-gray-700">Guitar Mode Instructions</h2>
-          <div className="text-gray-700">
-            <p className="mb-2">1. Allow microphone access when prompted</p>
-            <p className="mb-2">2. Play the note shown on the fretboard with your guitar</p>
-            <p className="mb-2">3. The app will detect if you're playing the correct note</p>
-            <p className="mb-2">4. Your score will be displayed at the end</p>
-          </div>
-        </div>
-      )}
-
-      {/* Color Legend */}
-      <div className="w-full bg-white p-4 rounded-lg shadow-md">
-        <h2 className="text-xl font-bold mb-4 text-gray-700">Note Colors</h2>
-        <div className="flex flex-wrap gap-3">
-          {['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].map(note => (
-            <div key={note} className="flex items-center">
-              <div className={`w-4 h-4 rounded-full ${getNoteColor(note)} mr-2 shadow-sm`}></div>
-              <span className="text-sm text-gray-600">{note}</span>
+        
+        {/* Score & Feedback */}
+        <div className="mb-6 text-center">
+          <div className="text-xl font-semibold mb-2">Score: {score} / {totalNotes}</div>
+          {feedback && (
+            <div className={`text-lg font-medium ${feedback.includes('Correct') ? 'text-green-600' : 'text-red-600'}`}>
+              {feedback}
             </div>
-          ))}
+          )}
         </div>
+        
+        {/* Results Screen */}
+        {showResults && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+              <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">Results</h2>
+              <div className="mb-6 text-center">
+                <div className="text-4xl font-bold text-[#eb3d5f] mb-2">{score}/{totalNotes}</div>
+                <div className="text-gray-600">
+                  {score === totalNotes ? 'Perfect!' : score >= totalNotes * 0.8 ? 'Great job!' : score >= totalNotes * 0.6 ? 'Good effort!' : 'Keep practicing!'}
+                </div>
+              </div>
+              <div className="flex justify-center">
+                <button onClick={playSequence} className="px-6 py-2 bg-[#9722b6] text-white rounded-md font-bold hover:bg-[#7a1b92] transition-colors">
+                  Play Again
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Note Color Legend */}
+        <div className="mt-8">
+          <div className="mt-4 p-4 bg-white rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-2">Note Color Legend</h3>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+              {['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].map((note) => (
+                <div key={note} className="flex items-center">
+                  <div className={`w-6 h-6 rounded-full ${getNoteColor(note)} mr-2`}></div>
+                  <span className="text-sm font-medium">{note}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        
       </div>
-      
-      {/* Results Screen */}
-      {resultsScreen}
     </div>
   );
 }

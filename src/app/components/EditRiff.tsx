@@ -31,10 +31,11 @@ type Note = {
 }
 
 // Define vertical axis (pitches) for the piano roll, with highest pitches at the top.
-// Include only the notes in E standard tuning (E, A, D, G, B, E) with sharps
+// Include all available notes from the piano audio files
 const pitches = [
-  "E4", "G4", "D#4", "D4", "C#4", "C4", "B3", "A#3", "A3", "G#3", "G3", "F#3", "F3", "E3",
-  "D#3", "D3", "C#3", "C3", "B2", "A#2", "A2", "G#2", "G2", "F#2", "F2", "E2"
+  "C5", "B4", "A#4", "A4", "G#4", "G4", "F#4", "F4", "E4", "D#4", "D4", "C#4", "C4", "B3", 
+  "A#3", "A3", "G#3", "G3", "F#3", "F3", "E3", "D#3", "D3", "C#3", "C3", "B2", "A#2", "A2", 
+  "G#2", "G2", "F#2", "F2", "E2"
 ]
 
 // Helper function to get time steps based on BPM and number of beats
