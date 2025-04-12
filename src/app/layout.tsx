@@ -24,11 +24,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+    <html>
+      <body className="bg-white animate-fadeIn">
+        <main className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+          {children}
+        </main>
       </body>
     </html>
   );
