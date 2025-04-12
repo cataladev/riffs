@@ -90,22 +90,22 @@ const getAllPositionsForNote = (note: string) => {
 };
 
 // Generate a color based on note name for consistent coloring
-// Keep original color mapping for notes
+// Using brand colors from the landing page
 const getNoteColor = (note: string) => {
   const baseNote = note.replace(EXTRACT_OCTAVE, '');
   const colorMap: Record<string, string> = {
-    'C': 'bg-red-500',
-    'C#': 'bg-red-600',
-    'D': 'bg-orange-500',
-    'D#': 'bg-orange-600',
-    'E': 'bg-yellow-500',
-    'F': 'bg-green-500',
-    'F#': 'bg-green-600',
-    'G': 'bg-blue-500',
-    'G#': 'bg-blue-600',
-    'A': 'bg-indigo-500',
-    'A#': 'bg-indigo-600',
-    'B': 'bg-purple-500'
+    'C': 'bg-[#9722b6]', // Purple
+    'C#': 'bg-[#9722b6]', // Purple
+    'D': 'bg-[#fe5b35]', // Orange
+    'D#': 'bg-[#fe5b35]', // Orange
+    'E': 'bg-[#eb3d5f]', // Pink
+    'F': 'bg-[#9722b6]', // Purple
+    'F#': 'bg-[#9722b6]', // Purple
+    'G': 'bg-[#fe5b35]', // Orange
+    'G#': 'bg-[#fe5b35]', // Orange
+    'A': 'bg-[#eb3d5f]', // Pink
+    'A#': 'bg-[#eb3d5f]', // Pink
+    'B': 'bg-[#9722b6]' // Purple
   };
 
   return colorMap[baseNote] || 'bg-gray-500';
@@ -489,7 +489,7 @@ export default function GuitarFretboardVisualizer() {
         </div>
       )}
       {feedback && (
-        <div className={`mt-2 text-lg font-bold ${feedback.includes('Correct') ? 'text-green-600' : 'text-red-600'}`}>
+        <div className={`mt-2 text-lg font-bold ${feedback.includes('Correct') ? 'text-[#9722b6]' : 'text-[#fe5b35]'}`}>
           {feedback}
         </div>
       )}
@@ -508,7 +508,7 @@ export default function GuitarFretboardVisualizer() {
         <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">Results</h2>
         
         <div className="mb-6 text-center">
-          <div className="text-4xl font-bold text-pink-600 mb-2">{score}/{totalNotes}</div>
+          <div className="text-4xl font-bold text-[#eb3d5f] mb-2">{score}/{totalNotes}</div>
           <div className="text-gray-600">
             {score === totalNotes ? 'Perfect!' : 
              score >= totalNotes * 0.8 ? 'Great job!' : 
@@ -520,7 +520,7 @@ export default function GuitarFretboardVisualizer() {
         <div className="flex justify-center">
           <button
             onClick={playSequence}
-            className="px-6 py-2 bg-pink-600 text-white rounded-md font-bold hover:bg-pink-700 transition-colors"
+            className="px-6 py-2 bg-[#9722b6] text-white rounded-md font-bold hover:bg-[#7a1b92] transition-colors"
           >
             Play Again
           </button>
@@ -540,7 +540,7 @@ export default function GuitarFretboardVisualizer() {
           <button
             onClick={() => setMode('visualize')}
             className={`flex-1 px-4 py-2 rounded-md font-bold transition-colors ${
-              mode === 'visualize' ? 'bg-pink-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              mode === 'visualize' ? 'bg-[#9722b6] text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
             Visualize
@@ -548,7 +548,7 @@ export default function GuitarFretboardVisualizer() {
           <button
             onClick={() => setMode('keyboard')}
             className={`flex-1 px-4 py-2 rounded-md font-bold transition-colors ${
-              mode === 'keyboard' ? 'bg-pink-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              mode === 'keyboard' ? 'bg-[#9722b6] text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
             Keyboard Mode
@@ -556,7 +556,7 @@ export default function GuitarFretboardVisualizer() {
           <button
             onClick={startGuitarMode}
             className={`flex-1 px-4 py-2 rounded-md font-bold transition-colors ${
-              mode === 'guitar' ? 'bg-pink-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              mode === 'guitar' ? 'bg-[#9722b6] text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
             Guitar Mode
@@ -698,7 +698,7 @@ export default function GuitarFretboardVisualizer() {
         <div className="mb-2">
           <button
             onClick={playSequence}
-            className={`px-4 py-2 rounded-md font-bold w-full transition-colors ${isPlaying ? 'bg-pink-600 hover:bg-pink-700 text-white' : 'bg-pink-500 hover:bg-pink-600 text-white'
+            className={`px-4 py-2 rounded-md font-bold w-full transition-colors ${isPlaying ? 'bg-[#9722b6] hover:bg-[#7a1b92] text-white' : 'bg-[#fe5b35] hover:bg-[#e54a24] text-white'
               }`}
           >
             {isPlaying ? 'Stop' : 'Play Sequence'}
