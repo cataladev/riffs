@@ -369,7 +369,6 @@ export default function HumRecorder() {
       notes: convertedNotes,
       bpm: bpm
     });
-    alert("Recording saved! Redirecting to edit page...");
     router.push("/edit");
   }
 
@@ -476,8 +475,4 @@ export default function HumRecorder() {
         </div>
       </div>
   )
- 
-
-     
-  
 }
