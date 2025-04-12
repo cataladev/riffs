@@ -1,7 +1,7 @@
-import { Music2, Music } from "lucide-react";
 import Link from "next/link";
 import CoolButton from "./components/coolbutton";
 import Image from 'next/image';
+import Notes from "./components/notes";
 
 const generateNoteStyle = () => ({
   top: `-25px`,
@@ -15,19 +15,7 @@ const generateNoteStyle = () => ({
 export default function Home() {
   return (
     <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center px-4 text-center bg-white">
-      {[...Array(12)].map((_, i) => (
-        <Music2 key={`m2a-${i}`} className="absolute text-[#9722b6] animate-fall" style={generateNoteStyle()} />
-      ))}
-      {[...Array(12)].map((_, i) => (
-        <Music key={`m1a-${i}`} className="absolute text-[#fe5b35] animate-fall" style={generateNoteStyle()} />
-      ))}
-      {[...Array(12)].map((_, i) => (
-        <Music2 key={`m2b-${i}`} className="absolute text-[#fe5b35] animate-fall" style={generateNoteStyle()} />
-      ))}
-      {[...Array(12)].map((_, i) => (
-        <Music key={`m1b-${i}`} className="absolute text-[#9722b6] animate-fall" style={generateNoteStyle()} />
-      ))}
-
+      <Notes/>
       <Image 
         src="/images/riffs.png" 
         alt="Riffs logo"
