@@ -620,3 +620,4 @@ export default function HumRecorder() {
         </div>
       </div>
   )
+}
