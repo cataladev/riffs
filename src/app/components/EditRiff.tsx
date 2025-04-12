@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { useRouter } from "next/navigation"
+import { playNote, playNoteSequence, stopAllSounds, initAudioContext } from "../lib/audioService"
 
 // Define the EditRiffProps interface
 interface EditRiffProps {
@@ -155,16 +156,25 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
 
   // Handle cell click - either add a note or delete an existing one
   const handleCellClick = (pitch: string, time: number) => {
-    // Check if a note already exists at this position
-    const existingNote = notes.find((n) => n.pitch === pitch && n.time === time)
+    // Check if there's already a note at this position
+    const existingNoteIndex = notes.findIndex(note => note.time === time && note.pitch === pitch);
     
-    if (existingNote) {
-      // If a note exists, delete it
-      handleDeleteNote(existingNote.id)
+    if (existingNoteIndex >= 0) {
+      // If there's a note, remove it
+      const updatedNotes = [...notes];
+      updatedNotes.splice(existingNoteIndex, 1);
+      setNotes(updatedNotes);
     } else {
-      // If no note exists, add a new one
-      const newNote = { id: uuidv4(), pitch, time }
-      setNotes((prev) => [...prev, newNote])
+      // If there's no note, add one
+      const newNote = {
+        id: uuidv4(),
+        pitch,
+        time
+      };
+      setNotes([...notes, newNote]);
+      
+      // Play the note sound
+      playNote(pitch);
     }
   }
 
@@ -177,6 +187,27 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
     }
     onSave(updatedRiff)
   }
+
+  // Initialize audio context when component mounts
+  useEffect(() => {
+    // Initialize audio context on user interaction
+    const handleUserInteraction = () => {
+      initAudioContext();
+      // Remove event listeners after initialization
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+    };
+    
+    // Add event listeners for user interaction
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('keydown', handleUserInteraction);
+    
+    return () => {
+      // Clean up event listeners
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+    };
+  }, []);
 
   // Play the riff
   const playRiff = () => {
@@ -191,12 +222,28 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
     // Calculate the interval between steps based on BPM
     const stepDuration = (60 / bpm) * 1000 / 4 // 4 steps per beat
     
+    // Play the notes at the current step
+    const playNotesAtStep = (step: number) => {
+      // Find all notes at the current step
+      const notesAtStep = notes.filter(note => note.time === step);
+      
+      // Play each note
+      notesAtStep.forEach(note => {
+        playNote(note.pitch);
+      });
+    };
+    
+    // Play notes at the initial step
+    playNotesAtStep(0);
+    
     playIntervalRef.current = window.setInterval(() => {
       setCurrentStep(prevStep => {
-        const nextStep = (prevStep + 1) % timeSteps.length
-        return nextStep
-      })
-    }, stepDuration)
+        const nextStep = (prevStep + 1) % timeSteps.length;
+        // Play notes at the new step
+        playNotesAtStep(nextStep);
+        return nextStep;
+      });
+    }, stepDuration);
   }
 
   // Stop playing
@@ -208,51 +255,83 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
       clearInterval(playIntervalRef.current)
       playIntervalRef.current = null
     }
+    
+    // Stop all currently playing sounds
+    stopAllSounds();
+  }
+
+  // Add a function to play a single note when clicked
+  const handleNoteClick = (pitch: string) => {
+    playNote(pitch);
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-4 text-black">🛠️ Edit Your Riff (Piano Roll)</h1>
-      <p className="text-black/80 mb-4">
-        Session: <code className="bg-gray-200 px-2 py-1 rounded">{riff.recording}</code>
+    <div className="p-8 max-w-6xl mx-auto">
+      <h1 className="text-3xl font-bold mb-4 bg-gradient-to-r from-[#fe5b35] to-[#9722b6] bg-clip-text text-transparent">🛠️ Edit Your Riff (Piano Roll)</h1>
+      <p className="text-gray-700 mb-6">
+        Session: <code className="bg-gray-100 px-2 py-1 rounded border border-gray-200">{riff.recording}</code>
       </p>
 
       {/* BPM Display */}
       <div className="mb-6 flex items-center">
-        <span className="mr-2 text-black font-medium">BPM: {bpm}</span>
+        <span className="mr-2 text-gray-800 font-medium">BPM: {bpm}</span>
         <span className="text-sm text-gray-500">(automatically detected from your recording)</span>
       </div>
 
-      {/* Beat controls */}
-      <div className="mb-4 flex items-center space-x-4">
-        <button 
-          onClick={handleAddBeats}
-          className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition text-sm"
-        >
-          + Add 4 beats
-        </button>
+      {/* Top controls with save button */}
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <button 
+            onClick={handleAddBeats}
+            className="px-4 py-2 bg-gradient-to-r from-[#fe5b35] to-[#eb3d5f] text-white rounded-lg hover:opacity-90 transition-all text-sm font-medium shadow-sm"
+          >
+            + Add 4 beats
+          </button>
+          
+          <button 
+            onClick={handleRemoveBeats}
+            className={`px-4 py-2 rounded-lg transition-all text-sm font-medium shadow-sm ${
+              numBeats > 16 
+                ? 'bg-gradient-to-r from-[#9722b6] to-[#eb3d5f] text-white hover:opacity-90' 
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+            disabled={numBeats <= 16}
+          >
+            - Remove 4 beats
+          </button>
+          
+          {/* Play button */}
+          <button
+            onClick={playRiff}
+            className={`px-5 py-2 rounded-lg transition-all text-sm font-medium shadow-sm ${
+              isPlaying
+                ? 'bg-gradient-to-r from-[#9722b6] to-[#eb3d5f] text-white hover:opacity-90'
+                : 'bg-gradient-to-r from-[#fe5b35] to-[#eb3d5f] text-white hover:opacity-90'
+            }`}
+          >
+            {isPlaying ? 'Stop' : 'Play'}
+          </button>
+        </div>
         
         <button 
-          onClick={handleRemoveBeats}
-          className={`px-3 py-1 rounded transition text-sm ${
-            numBeats > 16 
-              ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-          }`}
-          disabled={numBeats <= 16}
+          onClick={handleSaveNotes}
+          className="px-5 py-2 bg-gradient-to-r from-[#fe5b35] to-[#9722b6] text-white rounded-lg hover:opacity-90 transition-all font-medium shadow-sm"
         >
-          - Remove 4 beats
+          Save
         </button>
-        
-        <span className="text-sm text-gray-500">Current length: {numBeats} beats</span>
+      </div>
+      
+      {/* Current length display below buttons */}
+      <div className="mb-6 text-center">
+        <span className="text-sm text-gray-600 font-medium">Current length: {numBeats} beats</span>
       </div>
 
       {/* Scrollable container for the piano roll grid */}
-      <div className="overflow-auto">
-        <div className="inline-block border border-gray-600">
+      <div className="overflow-auto border border-gray-200 rounded-lg shadow-md">
+        <div className="inline-block">
           {/* Beat markers row */}
           <div className="flex">
-            <div className="w-14 h-8 border border-gray-700 flex items-center justify-center bg-gray-800 text-white text-sm font-mono">
+            <div className="w-14 h-8 border border-gray-200 flex items-center justify-center bg-gray-50 text-gray-700 text-sm font-mono">
               Beats
             </div>
             {timeSteps.map((step) => {
@@ -265,8 +344,8 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
               return (
                 <div 
                   key={`beat-${step}`} 
-                  className={`w-14 h-8 border border-gray-700 flex items-center justify-center ${
-                    currentStep === step ? 'bg-gray-700 text-white font-bold' : 'bg-gray-800 text-white/50'
+                  className={`w-14 h-8 border border-gray-200 flex items-center justify-center ${
+                    currentStep === step ? 'bg-gradient-to-r from-[#fe5b35]/20 to-[#9722b6]/20 text-gray-800 font-bold' : 'bg-gray-50 text-gray-500'
                   }`}
                 >
                   {isBeatMarker ? beatNumber : ''}
@@ -279,8 +358,8 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
           {pitches.map((pitch) => (
             <div key={pitch} className="flex">
               {/* Left side label cell */}
-              <div className={`w-14 h-12 border border-gray-700 flex items-center justify-center ${
-                isAccidental(pitch) ? 'bg-gray-900 text-white' : 'bg-gray-800 text-white'
+              <div className={`w-14 h-12 border border-gray-200 flex items-center justify-center ${
+                isAccidental(pitch) ? 'bg-gray-100 text-gray-700' : 'bg-gray-50 text-gray-800'
               } text-sm font-mono`}>
                 {pitch}
               </div>
@@ -292,9 +371,9 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
                 return (
                   <div
                     key={step}
-                    className={`w-14 h-12 border border-gray-700 flex items-center justify-center relative ${
-                      currentStep === step ? 'bg-gray-100' : 'bg-white'
-                    } hover:bg-gray-200 cursor-pointer`}
+                    className={`w-14 h-12 border border-gray-200 flex items-center justify-center relative ${
+                      currentStep === step ? 'bg-gradient-to-r from-[#fe5b35]/10 to-[#9722b6]/10' : 'bg-white'
+                    } hover:bg-gray-50 cursor-pointer transition-colors`}
                     onClick={() => handleCellClick(pitch, step)}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
@@ -310,8 +389,12 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
                           setSelectedNote(note)
                         }}
                         onDragEnd={() => setSelectedNote(null)}
-                        className={`w-6 h-6 rounded-full cursor-move ${
-                          selectedNote === note ? 'bg-red-500' : isAccidental(pitch) ? 'bg-purple-400' : 'bg-yellow-400'
+                        className={`w-6 h-6 rounded-full cursor-move shadow-md ${
+                          selectedNote === note 
+                            ? 'bg-gradient-to-r from-[#fe5b35] to-[#eb3d5f]' 
+                            : isAccidental(pitch) 
+                              ? 'bg-gradient-to-r from-[#9722b6] to-[#eb3d5f]' 
+                              : 'bg-gradient-to-r from-[#fe5b35] to-[#9722b6]'
                         }`}
                         title={`Pitch ${pitch}, Beat ${Math.floor(step / (bpm > 160 ? 1 : bpm > 120 ? 2 : 4)) + 1}`}
                       ></div>
@@ -324,29 +407,23 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
         </div>
       </div>
 
-      <div className="mt-6">
-        <h2 className="text-lg font-semibold mb-2 text-black">📝 Riff Notes</h2>
-        <ul className="text-sm text-black/80">
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold mb-3 bg-gradient-to-r from-[#fe5b35] to-[#9722b6] bg-clip-text text-transparent">📝 Riff Notes</h2>
+        <ul className="text-sm text-gray-700 space-y-1">
           {notes.map((note) => (
-            <li key={note.id}>
-              Pitch <strong>{note.pitch}</strong> – Beat <strong>{Math.floor(note.time / (bpm > 160 ? 1 : bpm > 120 ? 2 : 4)) + 1}</strong>
+            <li key={note.id} className="bg-gray-50 p-2 rounded-md border border-gray-200">
+              Pitch <strong className="text-[#9722b6]">{note.pitch}</strong> – Beat <strong className="text-[#fe5b35]">{Math.floor(note.time / (bpm > 160 ? 1 : bpm > 120 ? 2 : 4)) + 1}</strong>
             </li>
           ))}
         </ul>
       </div>
 
-      <div className="flex justify-between mt-4">
+      <div className="flex justify-end mt-8">
         <button 
           onClick={onCancel}
-          className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
+          className="px-5 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all font-medium shadow-sm"
         >
           Cancel
-        </button>
-        <button 
-          onClick={handleSaveNotes}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-        >
-          Save
         </button>
       </div>
     </div>

@@ -84,6 +84,36 @@ function findClosestPitch(detectedPitch: string): string {
   return closestPitch
 }
 
+// Function to quantize a timestamp to the nearest beat
+function quantizeToBeat(timestamp: number, bpm: number, subdivision: number = 4): number {
+  // Calculate the duration of a beat in seconds
+  const beatDuration = 60 / bpm;
+  
+  // Calculate the duration of a subdivision (e.g., 1/4 note, 1/8 note)
+  const subdivisionDuration = beatDuration / subdivision;
+  
+  // Find the nearest subdivision
+  const nearestSubdivision = Math.round(timestamp / subdivisionDuration);
+  
+  // Convert back to seconds
+  return nearestSubdivision * subdivisionDuration;
+}
+
+// Function to convert a quantized timestamp to a time step (0-63)
+function timestampToTimeStep(timestamp: number, bpm: number): number {
+  // Calculate the duration of a beat in seconds
+  const beatDuration = 60 / bpm;
+  
+  // Calculate how many steps per beat based on BPM
+  const stepsPerBeat = bpm > 160 ? 1 : bpm > 120 ? 2 : 4;
+  
+  // Calculate the time step
+  const timeStep = Math.round(timestamp / (beatDuration / stepsPerBeat));
+  
+  // Ensure the time step is within the valid range (0-63)
+  return Math.min(Math.max(0, timeStep), 63);
+}
+
 function getSessionName(): string {
   const today = new Date()
   const formatted = today.toISOString().split("T")[0]
@@ -205,6 +235,7 @@ function calculateBPM(timestamps: string[]): number {
 export default function HumRecorder() {
   const [recording, setRecording] = useState(false)
   const [notes, setNotes] = useState<NotesMap>({})
+  const [quantizedNotes, setQuantizedNotes] = useState<NotesMap>({})
   const [bpm, setBpm] = useState(DEFAULT_BPM)
   const [detectedBpm, setDetectedBpm] = useState<number | null>(null)
   const [audioLevel, setAudioLevel] = useState(0)
@@ -233,6 +264,31 @@ export default function HumRecorder() {
       }
     }
   }, [recording, recordingTimer])
+
+  // Effect to quantize notes when BPM changes
+  useEffect(() => {
+    if (Object.keys(notes).length > 0 && bpm) {
+      const quantized: NotesMap = {};
+      
+      Object.entries(notes).forEach(([timestamp, note]) => {
+        const floatTime = parseFloat(timestamp);
+        const quantizedTime = quantizeToBeat(floatTime, bpm);
+        const quantizedKey = quantizedTime.toFixed(2);
+        
+        // If there's already a note at this quantized time, keep the one with the closest original time
+        if (quantized[quantizedKey]) {
+          const existingTime = parseFloat(Object.keys(notes).find(t => notes[t] === quantized[quantizedKey]) || "0");
+          if (Math.abs(floatTime - quantizedTime) < Math.abs(existingTime - quantizedTime)) {
+            quantized[quantizedKey] = note;
+          }
+        } else {
+          quantized[quantizedKey] = note;
+        }
+      });
+      
+      setQuantizedNotes(quantized);
+    }
+  }, [notes, bpm]);
 
   const handleStart = async () => {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext
@@ -294,15 +350,17 @@ export default function HumRecorder() {
   }
 
   const handleDone = () => {
+    // Use the quantized notes for the final output
+    const notesToUse = Object.keys(quantizedNotes).length > 0 ? quantizedNotes : notes;
+    
     // Convert the notes to the format expected by EditRiff
     // Map the floating-point timestamps to integer time steps (0-63)
-    const convertedNotes: RiffNote[] = Object.entries(notes).map(
+    const convertedNotes: RiffNote[] = Object.entries(notesToUse).map(
       ([timestamp, noteName]) => {
         // Convert the floating-point timestamp to an integer time step (0-63)
-        // We'll map the timestamps to the available time steps in EditRiff
         const floatTime = parseFloat(timestamp);
-        // Map the time to a value between 0 and 63 (the length of timeSteps in EditRiff)
-        const timeStep = Math.min(Math.floor(floatTime / 0.5), 63);
+        // Convert to time step using the BPM
+        const timeStep = timestampToTimeStep(floatTime, bpm);
         
         // Find the closest available pitch
         const closestPitch = findClosestPitch(noteName);
@@ -337,6 +395,111 @@ export default function HumRecorder() {
   }
   
   return (
+    <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-lg">
+      <h1 className="text-3xl font-bold mb-6 text-center text-blue-600">Record Your Riff</h1>
+      
+      <div className="mb-8">
+        {detectedBpm && (
+          <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200">
+            <p className="font-medium text-lg">Detected BPM: {detectedBpm}</p>
+            <p className="text-sm">Based on the rhythm of your humming</p>
+          </div>
+        )}
+      </div>
+
+      {/* Recording visualization */}
+      <div className="mb-8">
+        <div className="h-24 bg-gray-100 rounded-lg overflow-hidden relative">
+          {recording && (
+            <div 
+              className="absolute bottom-0 left-0 w-full bg-blue-500 transition-all duration-100"
+              style={{ 
+                height: `${audioLevel * 100}%`,
+                opacity: 0.7
+              }}
+            />
+          )}
+          <div className="absolute inset-0 flex items-center justify-center">
+            {recording ? (
+              <div className="flex flex-col items-center">
+                <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse mb-2"></div>
+                <p className="text-gray-700 font-medium">Recording: {formatTime(recordingDuration)}</p>
+              </div>
+            ) : (
+              <p className="text-gray-500">Press record to start humming your riff</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Record button */}
+      <div className="flex justify-center mb-8">
+        <button
+          onClick={recording ? handleStop : handleStart}
+          className={`px-8 py-4 rounded-full text-white font-bold text-lg transition-all ${
+            recording 
+              ? "bg-red-500 hover:bg-red-600" 
+              : "bg-blue-500 hover:bg-blue-600"
+          }`}
+        >
+          {recording ? "Stop Recording" : "Start Recording"}
+        </button>
+      </div>
+
+      {/* Detected notes */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">Detected Notes:</h2>
+        {Object.keys(notes).length > 0 ? (
+          <div className="bg-gray-50 p-4 rounded-lg max-h-60 overflow-y-auto">
+            <ul className="space-y-2">
+              {Object.entries(notes).map(([time, note], i) => (
+                <li key={i} className="flex justify-between items-center p-2 bg-white rounded shadow-sm">
+                  <span className="font-mono text-blue-600">{note}</span>
+                  <span className="text-gray-500 text-sm">{parseFloat(time).toFixed(2)}s</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div className="bg-gray-50 p-4 rounded-lg text-center text-gray-500">
+            No notes detected yet. Start recording and hum a melody.
+          </div>
+        )}
+      </div>
+
+      {/* Quantized notes (if available) */}
+      {Object.keys(quantizedNotes).length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">Quantized Notes:</h2>
+          <div className="bg-gray-50 p-4 rounded-lg max-h-60 overflow-y-auto">
+            <ul className="space-y-2">
+              {Object.entries(quantizedNotes).map(([time, note], i) => (
+                <li key={i} className="flex justify-between items-center p-2 bg-white rounded shadow-sm">
+                  <span className="font-mono text-green-600">{note}</span>
+                  <span className="text-gray-500 text-sm">{parseFloat(time).toFixed(2)}s</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <div className="flex justify-center">
+        {Object.keys(notes).length > 0 && !recording && (
+          <button
+            onClick={handleDone}
+            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center"
+          >
+            <span>Continue to Edit</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </div>
+  )
   <div className="min-h-screen flex items-center justify-center bg-gray-50">
     <div className="relative group overflow-hidden bg-gradient-to-r from-[#fe5b35] to-[#9722b6] rounded-xl p-[2px] w-full max-w-[50%]">
       <div className="relative z-10 bg-white rounded-xl p-6 shadow-lg">
