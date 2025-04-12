@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import * as Tone from 'tone';
 import GuitarFretboard from './GuitarFretboard';
 import { playNote, stopAllSounds, initAudioContext } from '../lib/audioService';
 
@@ -44,8 +43,6 @@ export default function NoteSequencePlayer({
   const [currentNoteIndex, setCurrentNoteIndex] = useState(-1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [newNote, setNewNote] = useState('');
-  const synthRef = useRef<Tone.Synth<Tone.SynthOptions> | null>(null);
-  const sequenceRef = useRef<Tone.Sequence | null>(null);
   const playIntervalRef = useRef<number | null>(null);
 
   // Define playSequence with useCallback before it's used in useEffect
@@ -112,10 +109,8 @@ export default function NoteSequencePlayer({
   // Auto-play if enabled
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-    let hasInteracted = false;
 
     const handleUserInteraction = () => {
-      hasInteracted = true;
       initAudioContext();
       
       // Only start playing if autoPlay is true and we haven't started yet
