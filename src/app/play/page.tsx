@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import * as Tone from "tone";
 
-// Define standard tuning for guitar strings (EADGBE from lowest to highest)
+// standard tuning
 const guitarStrings = [
   { name: "E2", baseNote: "E2" },
   { name: "A2", baseNote: "A2" },
@@ -27,7 +27,7 @@ const noteFrequencies: { [note: string]: number } = {
   "E6": 1318.51,
 };
 
-// Get a note N frets up from a base note
+/// Get a note N frets up from a base note
 function getNoteFrom(baseNote: string, fretsUp: number): string | null {
   // get list of notes
   const notes = Object.keys(noteFrequencies);
@@ -55,26 +55,38 @@ const NotesPlayer: React.FC = () => {
   const playNotes = async () => {
     setIsPlaying(true);
 
-    // make synth + connect to speaker
+    // construct synth + connect to speaker
     const synth = new Tone.Synth().toDestination();
 
+    // init synth 
     await Tone.start();
+
+    // get interval
     const interval = calculateInterval(bpm);
 
+    // go through notes list; set currently playing
     for (const note of notes) {
+      // mark note as active (visual)
       setCurrentNote(note);
-      synth.triggerAttackRelease(noteFrequencies[note], "8n");
+
+      // play note; attack = fade in, release = fade out; is 8th note
+      // set duration to 4ters for now; TODO: match up w our tempo
+      synth.triggerAttackRelease(noteFrequencies[note], "4n");
+
+      // wait for interval until note is done playing
       await new Promise((res) => setTimeout(res, interval * 1000));
     }
 
+    // clear note state 
     setCurrentNote(null);
+
+    // not playing anymore
     setIsPlaying(false);
   };
 
   return (
     <div className="p-4">
       <h1 className="text-xl font-bold mb-2">🎸 Guitar Fretboard Note Player</h1>
-
       <div className="mb-4">
         <label className="block mb-2">
           BPM:
