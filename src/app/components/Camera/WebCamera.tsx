@@ -7,14 +7,17 @@ export default function WebCam() {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
+    // Store the ref value in a variable
+    const videoElement = videoRef.current;
+    
     async function enableCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: true, // wait
           audio: false,
         });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+        if (videoElement) {
+          videoElement.srcObject = stream;
         }
       } catch (error) {
         console.error("Error accessing camera:", error);
@@ -24,8 +27,8 @@ export default function WebCam() {
     enableCamera();
 
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
+      if (videoElement && videoElement.srcObject) {
+        const stream = videoElement.srcObject as MediaStream;
         stream.getTracks().forEach((track) => track.stop());
       }
     };

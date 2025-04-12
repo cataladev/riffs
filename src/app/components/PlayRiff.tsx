@@ -1,44 +1,12 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { getRiff, RiffNote } from "../lib/riffStore"
 import { useRouter } from "next/navigation"
-
-// Define the available pitches in the piano roll
-const availablePitches = [
-  "C5", "B4", "A4", "G4", "F4", "E4", "D4", "C4", "B3",
-  "A3", "G3", "F3", "E3", "D3", "C3", "B2", "A2", "G2", "F2", "E2"
-]
-
-// Map notes to colors for the game
-const noteColors: Record<string, string> = {
-  "E2": "#FF0000", // Red
-  "F2": "#FF3300",
-  "G2": "#FF6600",
-  "A2": "#FF9900",
-  "B2": "#FFCC00",
-  "C3": "#FFFF00", // Yellow
-  "D3": "#CCFF00",
-  "E3": "#99FF00",
-  "F3": "#66FF00",
-  "G3": "#33FF00",
-  "A3": "#00FF00", // Green
-  "B3": "#00FF33",
-  "C4": "#00FF66",
-  "D4": "#00FF99",
-  "E4": "#00FFCC",
-  "F4": "#00FFFF", // Blue
-  "G4": "#00CCFF",
-  "A4": "#0099FF",
-  "B4": "#0066FF",
-  "C5": "#0033FF",
-}
 
 // Game settings
 const GAME_SPEED = 5 // pixels per frame
 const NOTE_WIDTH = 60
-const NOTE_HEIGHT = 20
-const LANE_HEIGHT = 30
 const TARGET_LINE_X = 800 // Where notes should be played
 const PERFECT_WINDOW = 50 // pixels from target line for perfect hit
 const GOOD_WINDOW = 100 // pixels from target line for good hit
@@ -77,54 +45,132 @@ export default function PlayRiff() {
     isPlaying: false,
     gameOver: false
   })
-  const [bpm, setBpm] = useState(120)
+  const [bpm] = useState(120)
   const [inputMode, setInputMode] = useState<"keyboard" | "guitar">("keyboard")
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationFrameRef = useRef<number | null>(null)
   const router = useRouter()
 
-  // Initialize the game
-  useEffect(() => {
-    if (!riff) return
-
-    // Set the BPM from the riff
-    setBpm(riff.bpm || 120)
-
-    // Convert the notes to game notes with proper initial positioning
-    const gameNotes: GameNote[] = riff.notes.map(note => ({
-      ...note,
-      x: 0, // Start at the left edge
-      hit: false,
-      score: 0
-    }))
-
-    // Sort notes by time to ensure proper ordering
-    gameNotes.sort((a, b) => a.time - b.time)
-
-    setGameState(prev => ({
-      ...prev,
-      notes: gameNotes,
-      isPlaying: false,
-      gameOver: false
-    }))
-
-    // Initialize canvas
+  // Draw the game state on the canvas
+  const drawGame = useCallback(() => {
     const canvas = canvasRef.current
-    if (canvas) {
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        // Set canvas size
-        canvas.width = 1000
-        canvas.height = 600
-        
-        // Clear canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        
-        // Draw initial state
-        drawGame()
+    if (!canvas) return
+    
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    
+    // Draw background
+    ctx.fillStyle = '#f8f9fa'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    
+    // Draw target line
+    ctx.strokeStyle = '#9722b6'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(TARGET_LINE_X, 0)
+    ctx.lineTo(TARGET_LINE_X, canvas.height)
+    ctx.stroke()
+    
+    // Draw notes
+    gameState.notes.forEach(note => {
+      // Skip notes that are too far to the left
+      if (note.x + NOTE_WIDTH < 0) return
+      
+      // Skip notes that are too far to the right
+      if (note.x > canvas.width) return
+      
+      // Determine note color based on pitch
+      const isSharp = note.pitch.includes('#')
+      const gradient = ctx.createLinearGradient(note.x, 0, note.x + NOTE_WIDTH, 0)
+      
+      if (note.hit) {
+        // Hit notes are green
+        gradient.addColorStop(0, '#4CAF50')
+        gradient.addColorStop(1, '#2E7D32')
+      } else if (isSharp) {
+        // Sharp notes are purple
+        gradient.addColorStop(0, '#9722b6')
+        gradient.addColorStop(1, '#6a1b9a')
+      } else {
+        // Regular notes are orange
+        gradient.addColorStop(0, '#fe5b35')
+        gradient.addColorStop(1, '#d84315')
+      }
+      
+      // Draw note rectangle
+      ctx.fillStyle = gradient
+      ctx.fillRect(note.x, 0, NOTE_WIDTH, canvas.height)
+      
+      // Draw note border
+      ctx.strokeStyle = '#333'
+      ctx.lineWidth = 1
+      ctx.strokeRect(note.x, 0, NOTE_WIDTH, canvas.height)
+      
+      // Draw note label
+      ctx.fillStyle = '#fff'
+      ctx.font = '14px Arial'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(note.pitch, note.x + NOTE_WIDTH / 2, canvas.height / 2)
+    })
+    
+    // Draw score
+    ctx.fillStyle = '#333'
+    ctx.font = '24px Arial'
+    ctx.textAlign = 'left'
+    ctx.fillText(`Score: ${gameState.score}`, 20, 30)
+    ctx.fillText(`Combo: ${gameState.combo}`, 20, 60)
+    
+    // Draw stats
+    ctx.font = '16px Arial'
+    ctx.fillText(`Perfect: ${gameState.perfect}`, 20, 100)
+    ctx.fillText(`Good: ${gameState.good}`, 20, 130)
+    ctx.fillText(`OK: ${gameState.ok}`, 20, 160)
+    ctx.fillText(`Missed: ${gameState.missed}`, 20, 190)
+  }, [gameState])
+
+  // Initialize the game when the riff is loaded
+  useEffect(() => {
+    if (riff) {
+      // Initialize game state with the riff notes
+      const mappedNotes = riff.notes.map(note => ({
+        ...note,
+        x: 0,
+        hit: false,
+        score: 0
+      }))
+      
+      setGameState(prev => ({
+        ...prev,
+        notes: mappedNotes,
+        score: 0,
+        combo: 0,
+        maxCombo: 0,
+        perfect: 0,
+        good: 0,
+        ok: 0,
+        missed: 0,
+        isPlaying: false,
+        gameOver: false
+      }))
+      
+      // Set up canvas
+      const canvas = canvasRef.current
+      if (canvas) {
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          // Clear canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height)
+          
+          // Draw initial state
+          drawGame()
+        }
       }
     }
-  }, [riff])
+  }, [riff, drawGame])
 
   // Start the game
   const startGame = () => {
@@ -215,78 +261,6 @@ export default function PlayRiff() {
 
     // Continue the game loop
     animationFrameRef.current = requestAnimationFrame(gameLoop)
-  }
-
-  // Draw the game
-  const drawGame = () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    // Clear the canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    // Draw the target line
-    ctx.strokeStyle = "#FFFFFF"
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.moveTo(TARGET_LINE_X, 0)
-    ctx.lineTo(TARGET_LINE_X, canvas.height)
-    ctx.stroke()
-
-    // Draw the lanes
-    availablePitches.forEach((pitch, index) => {
-      const y = index * LANE_HEIGHT
-      
-      // Draw lane background
-      ctx.fillStyle = "#333333"
-      ctx.fillRect(0, y, canvas.width, LANE_HEIGHT)
-      
-      // Draw lane border
-      ctx.strokeStyle = "#555555"
-      ctx.lineWidth = 1
-      ctx.strokeRect(0, y, canvas.width, LANE_HEIGHT)
-      
-      // Draw pitch label
-      ctx.fillStyle = "#FFFFFF"
-      ctx.font = "12px Arial"
-      ctx.fillText(pitch, 10, y + LANE_HEIGHT / 2 + 4)
-    })
-
-    // Draw the notes
-    gameState.notes.forEach(note => {
-      if (note.hit) return
-      
-      const pitchIndex = availablePitches.indexOf(note.pitch)
-      if (pitchIndex === -1) return
-      
-      const y = pitchIndex * LANE_HEIGHT
-      const color = noteColors[note.pitch] || "#FFFFFF"
-      
-      // Draw the note
-      ctx.fillStyle = color
-      ctx.fillRect(note.x, y, NOTE_WIDTH, NOTE_HEIGHT)
-      
-      // Draw note border
-      ctx.strokeStyle = "#FFFFFF"
-      ctx.lineWidth = 1
-      ctx.strokeRect(note.x, y, NOTE_WIDTH, NOTE_HEIGHT)
-    })
-
-    // Draw the score
-    ctx.fillStyle = "#FFFFFF"
-    ctx.font = "24px Arial"
-    ctx.fillText(`Score: ${gameState.score}`, 20, 30)
-    ctx.fillText(`Combo: ${gameState.combo}`, 20, 60)
-    
-    // Draw hit counts
-    ctx.font = "16px Arial"
-    ctx.fillText(`Perfect: ${gameState.perfect}`, 20, 90)
-    ctx.fillText(`Good: ${gameState.good}`, 20, 110)
-    ctx.fillText(`OK: ${gameState.ok}`, 20, 130)
-    ctx.fillText(`Missed: ${gameState.missed}`, 20, 150)
   }
 
   // Handle keyboard input

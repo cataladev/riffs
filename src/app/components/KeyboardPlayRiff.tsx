@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { getRiff, Riff, RiffNote } from "../lib/riffStore"
+import { getRiff, RiffNote } from "../lib/riffStore"
 
 // Simplified keyboard mapping - just use 4 keys for a basic rhythm game
 const keyToPitch: Record<string, string> = {
@@ -91,7 +91,6 @@ export default function KeyboardPlayRiff() {
     setBpm(riff.bpm || 120)
     
     // Calculate time steps based on BPM
-    const stepsPerBeat = bpm > 160 ? 1 : bpm > 120 ? 2 : 4
     const totalSteps = Math.max(...mappedNotes.map(note => note.time)) + 16
     const timeStepsArray = Array.from({ length: totalSteps }, (_, i) => i)
     setTimeSteps(timeStepsArray)
@@ -487,9 +486,4 @@ export default function KeyboardPlayRiff() {
       )}
     </div>
   )
-}
-
-// Helper function to determine if a note is an accidental (sharp)
-const isAccidental = (note: string): boolean => {
-  return note.includes('#')
 } 

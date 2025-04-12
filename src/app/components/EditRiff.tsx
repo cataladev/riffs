@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { v4 as uuidv4 } from "uuid"
-import { useRouter } from "next/navigation"
-import { playNote, playNoteSequence, stopAllSounds, initAudioContext } from "../lib/audioService"
+import { playNote, stopAllSounds, initAudioContext } from "../lib/audioService"
 
 // Define the EditRiffProps interface
 interface EditRiffProps {
@@ -14,7 +13,13 @@ interface EditRiffProps {
     bpm: number
     recording?: string
   }
-  onSave: (updatedRiff: any) => void
+  onSave: (updatedRiff: {
+    id: string
+    name: string
+    notes: Note[]
+    bpm: number
+    recording?: string
+  }) => void
   onCancel: () => void
 }
 
@@ -31,9 +36,6 @@ const pitches = [
   "D#3", "D3", "C#3", "C3", "B2", "A#2", "A2", "G#2", "G2", "F#2", "F2", "E2"
 ]
 
-// Default BPM
-const DEFAULT_BPM = 120
-
 // Helper function to get time steps based on BPM and number of beats
 function getTimeSteps(bpm: number, numBeats: number = 16): number[] {
   // Calculate how many steps per beat based on BPM
@@ -47,16 +49,6 @@ function getTimeSteps(bpm: number, numBeats: number = 16): number[] {
   return Array.from({ length: totalSteps }, (_, i) => i)
 }
 
-// Map of note names to frequencies (in Hz)
-const noteFrequencies: Record<string, number> = {
-  "E4": 329.63, "D#4": 311.13, "D4": 293.66, "C#4": 277.18, "C4": 261.63, 
-  "B3": 246.94, "A#3": 233.08, "A3": 220.00, "G#3": 207.65, "G3": 196.00, 
-  "F#3": 185.00, "F3": 174.61, "E3": 164.81, 
-  "D#3": 155.56, "D3": 146.83, "C#3": 138.59, "C3": 130.81, 
-  "B2": 123.47, "A#2": 116.54, "A2": 110.00, "G#2": 103.83, 
-  "G2": 98.00, "F#2": 92.50, "F2": 87.31, "E2": 82.41
-}
-
 // Helper function to determine if a note is an accidental (sharp)
 const isAccidental = (note: string): boolean => {
   return note.includes('#')
@@ -64,14 +56,13 @@ const isAccidental = (note: string): boolean => {
 
 export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
   const [notes, setNotes] = useState<Note[]>(riff.notes)
-  const [bpm, setBpm] = useState(riff.bpm)
+  const [bpm] = useState(riff.bpm)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [selectedNote, setSelectedNote] = useState<Note | null>(null)
   const [timeSteps, setTimeSteps] = useState<number[]>([])
   const [numBeats, setNumBeats] = useState(calculateInitialBeats(riff.notes, riff.bpm))
   const playIntervalRef = useRef<number | null>(null)
-  const router = useRouter()
 
   // Helper function to calculate initial number of beats based on notes
   function calculateInitialBeats(notes: Note[], bpm: number): number {
@@ -110,12 +101,6 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
     setTimeSteps(getTimeSteps(bpm, numBeats))
   }, [bpm, numBeats])
 
-  // Handle BPM change
-  const handleBpmChange = (newBpm: number) => {
-    setBpm(newBpm)
-    setTimeSteps(getTimeSteps(newBpm, numBeats))
-  }
-
   // Handle adding more beats
   const handleAddBeats = () => {
     // Add 4 beats at a time
@@ -147,11 +132,6 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
         note.id === id ? { ...note, pitch: newPitch, time: newTime } : note
       )
     )
-  }
-
-  // Delete a note from state
-  const handleDeleteNote = (id: string) => {
-    setNotes((prev) => prev.filter((note) => note.id !== id))
   }
 
   // Handle cell click - either add a note or delete an existing one
@@ -258,11 +238,6 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
     
     // Stop all currently playing sounds
     stopAllSounds();
-  }
-
-  // Add a function to play a single note when clicked
-  const handleNoteClick = (pitch: string) => {
-    playNote(pitch);
   }
 
   return (

@@ -5,31 +5,6 @@ import { PitchDetector } from "pitchy"
 import { saveRiff, RiffNote } from "../lib/riffStore"
 import { useRouter } from "next/navigation"
 import { v4 as uuidv4 } from "uuid"
-import { Button } from "@/components/ui/button"
-import CoolButton from "./coolbutton"
-
-const NOTE_TO_STRING_FRET: Record<string, { string: string; fret: number }> = {
-  E2: { string: "E", fret: 0 },
-  F2: { string: "E", fret: 1 },
-  G2: { string: "E", fret: 3 },
-  A2: { string: "E", fret: 5 },
-  B2: { string: "A", fret: 2 },
-  C3: { string: "A", fret: 3 },
-  D3: { string: "A", fret: 5 },
-  E3: { string: "D", fret: 2 },
-  F3: { string: "D", fret: 3 },
-  G3: { string: "D", fret: 5 },
-  A3: { string: "G", fret: 2 },
-  B3: { string: "B", fret: 0 },
-  C4: { string: "B", fret: 1 },
-  D4: { string: "B", fret: 3 },
-  E4: { string: "e", fret: 0 },
-  F4: { string: "e", fret: 1 },
-  G4: { string: "e", fret: 3 },
-  A4: { string: "e", fret: 5 },
-  B4: { string: "e", fret: 7 },
-  C5: { string: "e", fret: 8 },
-}
 
 type NotesMap = { [timestamp: string]: string }
 
@@ -291,7 +266,8 @@ export default function HumRecorder() {
   }, [notes, bpm]);
 
   const handleStart = async () => {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+    // Use a more specific type for the AudioContext
+    const AudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
     const audioContext = new AudioContext()
     audioContextRef.current = audioContext
 
