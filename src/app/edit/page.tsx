@@ -11,7 +11,7 @@ export default function EditPage() {
   if (!riff) {
     return (
       <div className="p-8 text-red-300">
-        ⚠️ No riff loaded. Go record one first at <a href="/create" className="underline">/create</a>
+        No riff loaded. Go record one first at <a href="/create" className="underline">/create</a>
       </div>
     )
   }

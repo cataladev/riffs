@@ -4,7 +4,7 @@ const generateNoteStyle = () => ({
   top: `-25px`,
   left: `${Math.random() * 100}%`,
   fontSize: `${12 + Math.random() * 24}px`,
-  animationDelay: `${Math.random() * 10}s`,
+  animationDelay: `${Math.random() * 5}s`,
   animationDuration: `${5 + Math.random() * 10}s`,
 });
 

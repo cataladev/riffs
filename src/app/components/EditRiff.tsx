@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { playNote, stopAllSounds, initAudioContext } from "../lib/audioService"
 import { useRouter } from "next/navigation"
+import CoolButton from "./coolbutton"
 
 // Define the EditRiffProps interface
 interface EditRiffProps {
@@ -259,174 +260,197 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold mb-4 bg-gradient-to-r from-[#fe5b35] to-[#9722b6] bg-clip-text text-transparent">🛠️ Edit Your Riff (Piano Roll)</h1>
-      <p className="text-gray-700 mb-6">
-        Session: <code className="bg-gray-100 px-2 py-1 rounded border border-gray-200">{riff.recording}</code>
-      </p>
+  <div className="p-8 max-w-6xl mx-auto">
+    <h1 className="text-3xl font-bold mb-4 bg-gradient-to-r from-[#fe5b35] to-[#9722b6] bg-clip-text text-transparent">
+      🛠️ Edit Your Riff (Piano Roll)
+    </h1>
 
-      {/* BPM Display */}
-      <div className="mb-6 flex items-center">
-        <span className="mr-2 text-gray-800 font-medium">BPM: {bpm}</span>
-        <span className="text-sm text-gray-500">(automatically detected from your recording)</span>
+    <p className="text-gray-700 mb-6">
+      Session:{" "}
+      <code className="bg-gray-100 px-2 py-1 rounded border border-gray-200">
+        {riff.recording}
+      </code>
+    </p>
+
+    {/* BPM Display */}
+    <div className="mb-6 flex items-center">
+      <span className="mr-2 text-gray-800 font-medium">BPM: {bpm}</span>
+      <span className="text-sm text-gray-500">
+        (automatically detected from your recording)
+      </span>
+    </div>
+
+    {/* Top controls */}
+    <div className="mb-6 flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <CoolButton
+          onClick={handleAddBeats}
+          label="+ Add 4 beats"
+          className="text-sm px-4 py-2"
+        />
+
+        <CoolButton
+          onClick={handleRemoveBeats}
+          label="- Remove 4 beats"
+          className={`text-sm px-4 py-2 ${
+            numBeats <= 16 ? "opacity-40 cursor-not-allowed" : ""
+          }`}
+        />
+
+        <CoolButton
+          onClick={playRiff}
+          label={isPlaying ? "Stop" : "Play"}
+          className={`text-sm px-5 py-2 ${
+            isPlaying
+              ? "from-[#9722b6] to-[#eb3d5f]"
+              : "from-[#fe5b35] to-[#eb3d5f]"
+          }`}
+        />
       </div>
 
-      {/* Top controls with save button */}
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <button 
-            onClick={handleAddBeats}
-            className="px-4 py-2 bg-gradient-to-r from-[#fe5b35] to-[#eb3d5f] text-white rounded-lg hover:opacity-90 transition-all text-sm font-medium shadow-sm"
-          >
-            + Add 4 beats
-          </button>
-          
-          <button 
-            onClick={handleRemoveBeats}
-            className={`px-4 py-2 rounded-lg transition-all text-sm font-medium shadow-sm ${
-              numBeats > 16 
-                ? 'bg-gradient-to-r from-[#9722b6] to-[#eb3d5f] text-white hover:opacity-90' 
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            }`}
-            disabled={numBeats <= 16}
-          >
-            - Remove 4 beats
-          </button>
-          
-          {/* Play button */}
-          <button
-            onClick={playRiff}
-            className={`px-5 py-2 rounded-lg transition-all text-sm font-medium shadow-sm ${
-              isPlaying
-                ? 'bg-gradient-to-r from-[#9722b6] to-[#eb3d5f] text-white hover:opacity-90'
-                : 'bg-gradient-to-r from-[#fe5b35] to-[#eb3d5f] text-white hover:opacity-90'
-            }`}
-          >
-            {isPlaying ? 'Stop' : 'Play'}
-          </button>
-        </div>
-        
-        <div className="flex gap-4">
-          <button
-            onClick={handleSendAndPlay}
-            className="px-4 py-2 bg-pink-500 text-white rounded-md hover:bg-pink-600 transition-colors"
-          >
-            Send and Play
-          </button>
-          <button
-            onClick={handleSaveNotes}
-            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
-          >
-            Save
-          </button>
-        </div>
-      </div>
-      
-      {/* Current length display below buttons */}
-      <div className="mb-6 text-center">
-        <span className="text-sm text-gray-600 font-medium">Current length: {numBeats} beats</span>
-      </div>
-
-      {/* Scrollable container for the piano roll grid */}
-      <div className="overflow-auto border border-gray-200 rounded-lg shadow-md">
-        <div className="inline-block">
-          {/* Beat markers row */}
-          <div className="flex">
-            <div className="w-14 h-8 border border-gray-200 flex items-center justify-center bg-gray-50 text-gray-700 text-sm font-mono">
-              Beats
-            </div>
-            {timeSteps.map((step) => {
-              // Calculate the beat number for this step
-              const stepsPerBeat = bpm > 160 ? 1 : bpm > 120 ? 2 : 4
-              const beatNumber = Math.floor(step / stepsPerBeat) + 1
-              const isBeatMarker = step % stepsPerBeat === 0
-              
-              // Only show beat markers
-              return (
-                <div 
-                  key={`beat-${step}`} 
-                  className={`w-14 h-8 border border-gray-200 flex items-center justify-center ${
-                    currentStep === step ? 'bg-gradient-to-r from-[#fe5b35]/20 to-[#9722b6]/20 text-gray-800 font-bold' : 'bg-gray-50 text-gray-500'
-                  }`}
-                >
-                  {isBeatMarker ? beatNumber : ''}
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Piano roll grid */}
-          {pitches.map((pitch) => (
-            <div key={pitch} className="flex">
-              {/* Left side label cell */}
-              <div className={`w-14 h-12 border border-gray-200 flex items-center justify-center ${
-                isAccidental(pitch) ? 'bg-gray-100 text-gray-700' : 'bg-gray-50 text-gray-800'
-              } text-sm font-mono`}>
-                {pitch}
-              </div>
-
-              {/* Time steps cells */}
-              {timeSteps.map((step) => {
-                // Find if a note exists on this cell
-                const note = notes.find((n) => n.pitch === pitch && n.time === step)
-                return (
-                  <div
-                    key={step}
-                    className={`w-14 h-12 border border-gray-200 flex items-center justify-center relative ${
-                      currentStep === step ? 'bg-gradient-to-r from-[#fe5b35]/10 to-[#9722b6]/10' : 'bg-white'
-                    } hover:bg-gray-50 cursor-pointer transition-colors`}
-                    onClick={() => handleCellClick(pitch, step)}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      const noteId = e.dataTransfer.getData("text/plain")
-                      handleMoveNote(noteId, pitch, step)
-                    }}
-                  >
-                    {note && (
-                      <div
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData("text/plain", note.id)
-                          setSelectedNote(note)
-                        }}
-                        onDragEnd={() => setSelectedNote(null)}
-                        className={`w-6 h-6 rounded-full cursor-move shadow-md ${
-                          selectedNote === note 
-                            ? 'bg-gradient-to-r from-[#fe5b35] to-[#eb3d5f]' 
-                            : isAccidental(pitch) 
-                              ? 'bg-gradient-to-r from-[#9722b6] to-[#eb3d5f]' 
-                              : 'bg-gradient-to-r from-[#fe5b35] to-[#9722b6]'
-                        }`}
-                        title={`Pitch ${pitch}, Beat ${Math.floor(step / (bpm > 160 ? 1 : bpm > 120 ? 2 : 4)) + 1}`}
-                      ></div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-3 bg-gradient-to-r from-[#fe5b35] to-[#9722b6] bg-clip-text text-transparent">📝 Riff Notes</h2>
-        <ul className="text-sm text-gray-700 space-y-1">
-          {notes.map((note) => (
-            <li key={note.id} className="bg-gray-50 p-2 rounded-md border border-gray-200">
-              Pitch <strong className="text-[#9722b6]">{note.pitch}</strong> – Beat <strong className="text-[#fe5b35]">{Math.floor(note.time / (bpm > 160 ? 1 : bpm > 120 ? 2 : 4)) + 1}</strong>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="flex justify-end mt-8">
-        <button 
-          onClick={onCancel}
-          className="px-5 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all font-medium shadow-sm"
-        >
-          Cancel
-        </button>
+      <div className="flex gap-4">
+        <CoolButton
+          onClick={handleSendAndPlay}
+          label="Send and Play"
+          className="from-pink-500 to-pink-600 text-sm px-4 py-2"
+        />
+        <CoolButton
+          onClick={handleSaveNotes}
+          label="Save"
+          className="from-gray-500 to-gray-600 text-sm px-4 py-2"
+        />
       </div>
     </div>
-  )
+
+    {/* Current length display below buttons */}
+    <div className="mb-6 text-center">
+      <span className="text-sm text-gray-600 font-medium">
+        Current length: {numBeats} beats
+      </span>
+    </div>
+
+    {/* Scrollable container for the piano roll grid */}
+    <div className="overflow-auto border border-gray-200 rounded-lg shadow-md">
+      <div className="inline-block">
+        {/* Beat markers row */}
+        <div className="flex">
+          <div className="w-14 h-8 border border-gray-200 flex items-center justify-center bg-gray-50 text-gray-700 text-sm font-mono">
+            Beats
+          </div>
+          {timeSteps.map((step) => {
+            const stepsPerBeat = bpm > 160 ? 1 : bpm > 120 ? 2 : 4;
+            const beatNumber = Math.floor(step / stepsPerBeat) + 1;
+            const isBeatMarker = step % stepsPerBeat === 0;
+
+            return (
+              <div
+                key={`beat-${step}`}
+                className={`w-14 h-8 border border-gray-200 flex items-center justify-center ${
+                  currentStep === step
+                    ? "bg-gradient-to-r from-[#fe5b35]/20 to-[#9722b6]/20 text-gray-800 font-bold"
+                    : "bg-gray-50 text-gray-500"
+                }`}
+              >
+                {isBeatMarker ? beatNumber : ""}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Piano roll grid */}
+        {pitches.map((pitch) => (
+          <div key={pitch} className="flex">
+            {/* Pitch label */}
+            <div
+              className={`w-14 h-12 border border-gray-200 flex items-center justify-center ${
+                isAccidental(pitch)
+                  ? "bg-gray-100 text-gray-700"
+                  : "bg-gray-50 text-gray-800"
+              } text-sm font-mono`}
+            >
+              {pitch}
+            </div>
+
+            {/* Time steps */}
+            {timeSteps.map((step) => {
+              const note = notes.find(
+                (n) => n.pitch === pitch && n.time === step
+              );
+
+              return (
+                <div
+                  key={step}
+                  className={`w-14 h-12 border border-gray-200 flex items-center justify-center relative ${
+                    currentStep === step
+                      ? "bg-gradient-to-r from-[#fe5b35]/10 to-[#9722b6]/10"
+                      : "bg-white"
+                  } hover:bg-gray-50 cursor-pointer transition-colors`}
+                  onClick={() => handleCellClick(pitch, step)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    const noteId = e.dataTransfer.getData("text/plain");
+                    handleMoveNote(noteId, pitch, step);
+                  }}
+                >
+                  {note && (
+                    <div
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("text/plain", note.id);
+                        setSelectedNote(note);
+                      }}
+                      onDragEnd={() => setSelectedNote(null)}
+                      className={`w-6 h-6 rounded-full cursor-move shadow-md ${
+                        selectedNote === note
+                          ? "bg-gradient-to-r from-[#fe5b35] to-[#eb3d5f]"
+                          : isAccidental(pitch)
+                          ? "bg-gradient-to-r from-[#9722b6] to-[#eb3d5f]"
+                          : "bg-gradient-to-r from-[#fe5b35] to-[#9722b6]"
+                      }`}
+                      title={`Pitch ${pitch}, Beat ${
+                        Math.floor(step / (bpm > 160 ? 1 : bpm > 120 ? 2 : 4)) +
+                        1
+                      }`}
+                    ></div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Riff Notes list */}
+    <div className="mt-8">
+      <h2 className="text-lg font-semibold mb-3 bg-gradient-to-r from-[#fe5b35] to-[#9722b6] bg-clip-text text-transparent">
+        📝 Riff Notes
+      </h2>
+      <ul className="text-sm text-gray-700 space-y-1">
+        {notes.map((note) => (
+          <li
+            key={note.id}
+            className="bg-gray-50 p-2 rounded-md border border-gray-200"
+          >
+            Pitch{" "}
+            <strong className="text-[#9722b6]">{note.pitch}</strong> – Beat{" "}
+            <strong className="text-[#fe5b35]">
+              {Math.floor(note.time / (bpm > 160 ? 1 : bpm > 120 ? 2 : 4)) + 1}
+            </strong>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    {/* Cancel Button */}
+    <div className="flex justify-end mt-8">
+      <CoolButton
+        onClick={onCancel}
+        label="Cancel"
+        className="from-gray-100 to-gray-200 text-gray-700 text-sm px-5 py-2"
+      />
+    </div>
+  </div>
+);
+
 }

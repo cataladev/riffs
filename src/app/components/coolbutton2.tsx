@@ -17,7 +17,7 @@ export default function CoolButton({
     <Button
       onClick={onClick}
       size="lg"
-      className={`relative overflow-hidden group bg-gradient-to-r from-[#fe5b35] to-[#9722b6] text-white px-6 py-3 font-semibold rounded-lg 
+      className={`relative overflow-hidden group bg-gradient-to-r from-[#9722b6] to-[#fe5b35] text-white px-6 py-3 font-semibold rounded-lg 
         transition-all duration-200 hover:brightness-95 active:scale-95 ${className}`}>
       <span className="relative z-10 flex items-center">
         {label}

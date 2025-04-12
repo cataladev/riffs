@@ -6,6 +6,7 @@ import { saveRiff, RiffNote } from "../lib/riffStore"
 import { useRouter } from "next/navigation"
 import { v4 as uuidv4 } from "uuid"
 import CoolButton from "./coolbutton"
+import CoolButton2 from "./coolbutton2"
 
 type NotesMap = { [timestamp: string]: string }
 
@@ -386,14 +387,12 @@ export default function HumRecorder() {
             <h1 className="text-3xl font-bold mb-6 text-center text-gradient bg-gradient-to-r from-[#9722b6] via-[#fe5b35] to-[#eb3d5f] text-transparent bg-clip-text">
               Record Your Riff
             </h1>
-
             {detectedBpm && (
               <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200">
                 <p className="font-medium text-lg">Detected BPM: {detectedBpm}</p>
                 <p className="text-sm">Based on the rhythm of your humming</p>
               </div>
             )}
-
             <div className="mb-8">
               <div className="h-24 bg-gray-100 rounded-lg overflow-hidden relative">
                 {recording && (
@@ -447,31 +446,29 @@ export default function HumRecorder() {
                 </div>
               )}
             </div>
-            
             <div className="flex justify-center">
               {Object.keys(notes).length > 0 && !recording && (
-                <button
+                <CoolButton2
                   onClick={handleDone}
-                  className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center"
-                >
-                  <span>Continue to Edit</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 ml-2"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
+                  label="Continue to Edit"
+                  iconRight={
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  }
+                />
               )}
             </div>
           </div>
-          <span className="absolute inset-0 bg-white/20 blur-sm animate-shine" />
         </div>
       </div>
   )
