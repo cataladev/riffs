@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { playNote, stopAllSounds, initAudioContext } from "../lib/audioService"
+import { useRouter } from "next/navigation"
 
 // Define the EditRiffProps interface
 interface EditRiffProps {
@@ -32,7 +33,7 @@ type Note = {
 // Define vertical axis (pitches) for the piano roll, with highest pitches at the top.
 // Include only the notes in E standard tuning (E, A, D, G, B, E) with sharps
 const pitches = [
-  "E4", "D#4", "D4", "C#4", "C4", "B3", "A#3", "A3", "G#3", "G3", "F#3", "F3", "E3",
+  "E4", "G4", "D#4", "D4", "C#4", "C4", "B3", "A#3", "A3", "G#3", "G3", "F#3", "F3", "E3",
   "D#3", "D3", "C#3", "C3", "B2", "A#2", "A2", "G#2", "G2", "F#2", "F2", "E2"
 ]
 
@@ -63,6 +64,7 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
   const [timeSteps, setTimeSteps] = useState<number[]>([])
   const [numBeats, setNumBeats] = useState(calculateInitialBeats(riff.notes, riff.bpm))
   const playIntervalRef = useRef<number | null>(null)
+  const router = useRouter()
 
   // Helper function to calculate initial number of beats based on notes
   function calculateInitialBeats(notes: Note[], bpm: number): number {
@@ -167,6 +169,22 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
     }
     onSave(updatedRiff)
   }
+
+  // Send notes to play page
+  const handleSendAndPlay = () => {
+    // Sort notes by time to ensure correct playback order
+    const sortedNotes = [...notes].sort((a, b) => a.time - b.time);
+    
+    // Extract just the pitches from the notes
+    const notePitches = sortedNotes.map(note => note.pitch);
+    
+    // Convert to URL parameters
+    const notesParam = encodeURIComponent(JSON.stringify(notePitches));
+    const bpmParam = encodeURIComponent(bpm.toString());
+    
+    // Navigate to play page with notes and BPM
+    router.push(`/play?notes=${notesParam}&bpm=${bpmParam}`);
+  };
 
   // Initialize audio context when component mounts
   useEffect(() => {
@@ -288,12 +306,20 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
           </button>
         </div>
         
-        <button 
-          onClick={handleSaveNotes}
-          className="px-5 py-2 bg-gradient-to-r from-[#fe5b35] to-[#9722b6] text-white rounded-lg hover:opacity-90 transition-all font-medium shadow-sm"
-        >
-          Save
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={handleSendAndPlay}
+            className="px-4 py-2 bg-pink-500 text-white rounded-md hover:bg-pink-600 transition-colors"
+          >
+            Send and Play
+          </button>
+          <button
+            onClick={handleSaveNotes}
+            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+          >
+            Save
+          </button>
+        </div>
       </div>
       
       {/* Current length display below buttons */}

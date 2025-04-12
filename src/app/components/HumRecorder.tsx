@@ -358,10 +358,10 @@ export default function HumRecorder() {
         };
       }
     );
-  
+   
     console.log("Converted notes:", convertedNotes);
     console.log("Detected BPM:", bpm);
-  
+   
     saveRiff({
       id: uuidv4(),
       name: getSessionName(),
