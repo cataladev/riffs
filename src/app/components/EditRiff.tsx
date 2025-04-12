@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { useRouter } from "next/navigation"
+import { playNote, playNoteSequence, stopAllSounds, initAudioContext } from "../lib/audioService"
 
 // Define the EditRiffProps interface
 interface EditRiffProps {
@@ -155,16 +156,25 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
 
   // Handle cell click - either add a note or delete an existing one
   const handleCellClick = (pitch: string, time: number) => {
-    // Check if a note already exists at this position
-    const existingNote = notes.find((n) => n.pitch === pitch && n.time === time)
+    // Check if there's already a note at this position
+    const existingNoteIndex = notes.findIndex(note => note.time === time && note.pitch === pitch);
     
-    if (existingNote) {
-      // If a note exists, delete it
-      handleDeleteNote(existingNote.id)
+    if (existingNoteIndex >= 0) {
+      // If there's a note, remove it
+      const updatedNotes = [...notes];
+      updatedNotes.splice(existingNoteIndex, 1);
+      setNotes(updatedNotes);
     } else {
-      // If no note exists, add a new one
-      const newNote = { id: uuidv4(), pitch, time }
-      setNotes((prev) => [...prev, newNote])
+      // If there's no note, add one
+      const newNote = {
+        id: uuidv4(),
+        pitch,
+        time
+      };
+      setNotes([...notes, newNote]);
+      
+      // Play the note sound
+      playNote(pitch);
     }
   }
 
@@ -177,6 +187,27 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
     }
     onSave(updatedRiff)
   }
+
+  // Initialize audio context when component mounts
+  useEffect(() => {
+    // Initialize audio context on user interaction
+    const handleUserInteraction = () => {
+      initAudioContext();
+      // Remove event listeners after initialization
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+    };
+    
+    // Add event listeners for user interaction
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('keydown', handleUserInteraction);
+    
+    return () => {
+      // Clean up event listeners
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+    };
+  }, []);
 
   // Play the riff
   const playRiff = () => {
@@ -191,12 +222,28 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
     // Calculate the interval between steps based on BPM
     const stepDuration = (60 / bpm) * 1000 / 4 // 4 steps per beat
     
+    // Play the notes at the current step
+    const playNotesAtStep = (step: number) => {
+      // Find all notes at the current step
+      const notesAtStep = notes.filter(note => note.time === step);
+      
+      // Play each note
+      notesAtStep.forEach(note => {
+        playNote(note.pitch);
+      });
+    };
+    
+    // Play notes at the initial step
+    playNotesAtStep(0);
+    
     playIntervalRef.current = window.setInterval(() => {
       setCurrentStep(prevStep => {
-        const nextStep = (prevStep + 1) % timeSteps.length
-        return nextStep
-      })
-    }, stepDuration)
+        const nextStep = (prevStep + 1) % timeSteps.length;
+        // Play notes at the new step
+        playNotesAtStep(nextStep);
+        return nextStep;
+      });
+    }, stepDuration);
   }
 
   // Stop playing
@@ -208,6 +255,14 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
       clearInterval(playIntervalRef.current)
       playIntervalRef.current = null
     }
+    
+    // Stop all currently playing sounds
+    stopAllSounds();
+  }
+
+  // Add a function to play a single note when clicked
+  const handleNoteClick = (pitch: string) => {
+    playNote(pitch);
   }
 
   return (
@@ -245,6 +300,18 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
         </button>
         
         <span className="text-sm text-gray-500">Current length: {numBeats} beats</span>
+
+        {/* Play button */}
+        <button
+          onClick={playRiff}
+          className={`px-4 py-1 rounded transition text-sm ${
+            isPlaying
+              ? 'bg-red-500 text-white hover:bg-red-600'
+              : 'bg-green-500 text-white hover:bg-green-600'
+          }`}
+        >
+          {isPlaying ? '⏹ Stop' : '▶ Play'}
+        </button>
       </div>
 
       {/* Scrollable container for the piano roll grid */}
