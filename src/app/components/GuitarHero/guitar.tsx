@@ -3,8 +3,7 @@
 export default function Guitar() {
 
     return (
-        <div className ="absolute justify-center z-50">
-            <p> hello world </p>
-        </div>
+        <div className="top-0 absolute justify-center w-[20px] h-full left-1/2 bg-black"/>
     )
 }
+
