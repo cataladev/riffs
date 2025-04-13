@@ -92,7 +92,7 @@ const getNoteColor = (note: string) => {
     'A#': 'bg-[#eb3d5f]',
     'B': 'bg-[#9722b6]'
   };
-  return colorMap[baseNote] || 'bg-gray-500';
+  return colorMap[baseNote] || 'bg-gray-800';
 };
 
 // Convert a frequency to a note string using logarithms
@@ -654,7 +654,7 @@ export default function GuitarFretboardVisualizer() {
             )}
 
             <div className={`relative z-10 mb-2 ${cameraModalOpen ? 'opacity-40 pointer-events-none' : ''}`} style={{ height: '220px' }}>
-              <div className="absolute top-0 bottom-0 w-1 bg-rose- z-10" style={{ left: `${labelWidth}px` }}></div>
+              <div className="absolute top-0 bottom-0 w-1 bg-rose-500 z-10" style={{ left: `${labelWidth}px` }}></div>
               {[...Array(FRET_COUNT)].map((_, fretIndex) => (
                 <div
                   key={fretIndex}
@@ -756,6 +756,7 @@ export default function GuitarFretboardVisualizer() {
         )}
         
         {/* Note Color Legend */}
+
         <div className="mt-8">
           <div className="mt-4 p-4 bg-pink-100 rounded-lg shadow-xl border border-pink-300">
             <h3 className="text-lg font-semibold mb-4 text-purple-800">🎵 Note Color Legend:</h3>

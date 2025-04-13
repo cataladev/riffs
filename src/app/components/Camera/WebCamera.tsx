@@ -106,7 +106,7 @@ export default function WebCam() {
                 ref={videoRef}
                 autoPlay
                 playsInline
-                className="w-full h-full object-cover"
+                className="absolute w-full h-full object-cover border-4 border-purple-700"
             />
             <FretboardOverlay />
             

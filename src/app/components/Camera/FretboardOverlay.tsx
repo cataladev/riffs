@@ -35,11 +35,11 @@ export default function FretboardOverlay() {
 
   return (
     <div className="absolute inset-0 flex items-center justify-center">
-      <div className="relative w-full max-w-4xl mx-auto right-1/18" style={{ marginTop: '-220px' }} ref={fretboardRef}>
+      <div className="bg-rose-300 gradient-border opacity-90 relative w-full max-w-4xl mx-auto -bottom-1/5" style={{ marginTop: '-220px' }} ref={fretboardRef}>
         <div className="relative" style={{ height: '220px' }}>
           {/* Nut - thicker first vertical line */}
           <div
-            className="absolute top-0 bottom-0 w-1 bg-gray-800 z-10"
+            className="absolute top-0 bottom-0 w-1 bg-rose-500 z-10"
             style={{ left: `${labelWidth}px` }}
           ></div>
 
@@ -56,7 +56,6 @@ export default function FretboardOverlay() {
           {[3, 5, 7, 9, 12, 15, 17, 19, 21, 24].map((fretIndex) => (
             <div
               key={fretIndex}
-              className="absolute w-4 h-4 bg-gray-200 border border-gray-300 rounded-full z-5"
               style={{
                 left: `${labelWidth + fretSpacing * fretIndex - fretSpacing / 2}px`,
                 bottom: fretIndex === 12 || fretIndex === 24 ? '20px' : '10px'
@@ -68,7 +67,6 @@ export default function FretboardOverlay() {
           {[12, 24].map((fretIndex) => (
             <div
               key={`double-${fretIndex}`}
-              className="absolute w-4 h-4 bg-gray-200 border border-gray-300 rounded-full z-5"
               style={{
                 left: `${labelWidth + fretSpacing * fretIndex - fretSpacing / 2}px`,
                 bottom: '40px'
@@ -84,7 +82,7 @@ export default function FretboardOverlay() {
               style={{ top: `${stringIndex * 36 + 10}px` }}
             >
               {/* String label */}
-              <div className="absolute left-0 text-center font-bold text-gray-700" style={{ width: `${labelWidth}px` }}>
+              <div className="absolute text-center font-bold text-[#ef5151]" style={{ width: `${labelWidth}px` }}>
                 {stringNote.replace(/\d+$/, '')}
               </div>
 
