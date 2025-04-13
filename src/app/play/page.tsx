@@ -510,8 +510,8 @@ export default function GuitarFretboardVisualizer() {
   const fretSpacing = availableWidth / (FRET_COUNT + 1);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-4xl bg-white rounded-xl shadow-lg p-6">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-4xl rounded-xl shadow-lg p-6">
         <h1 className="text-3xl font-bold mb-6 text-center text-gradient bg-gradient-to-r from-[#9722b6] via-[#fe5b35] to-[#eb3d5f] text-transparent bg-clip-text">
           🎸 Play Your Riff
         </h1>

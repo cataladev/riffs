@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Geist } from "next/font/google";
 import "./globals.css";
 import { GameProvider } from "./context/GameContext";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ModeToggle } from "@/components/modetoggle";
 
-const inter = Inter({ subsets: ["latin"] });
+
 
 export const metadata: Metadata = {
-  title: "Guitar Learning App",
-  description: "Learn to play guitar with interactive lessons",
+  title: "Riffs – Hum. Play. Create.",
+  description:
+    "Riffs is a creative music app where you can hum a melody, convert it into guitar tabs, edit it, and jam out in a Guitar Hero-style gameplay experience.",
 };
 
 export default function RootLayout({
@@ -16,11 +19,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <GameProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <GameProvider>
           {children}
-        </GameProvider>
+
+          <div className="fixed bottom-4 right-4 z-50">
+            <ModeToggle />
+          </div>
+          </GameProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
