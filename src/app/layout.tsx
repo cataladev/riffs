@@ -3,7 +3,7 @@ import { Inter, Geist } from "next/font/google";
 import "./globals.css";
 import { GameProvider } from "./context/GameContext";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ModeToggle } from "@/components/modetoggle"; // <-- make sure this path is right
+import { ModeToggle } from "@/components/modetoggle";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased animate-fadeIn`}
+        className={`${geistSans.variable} antialiased animate-fadeIn`}
       >
         <ThemeProvider
           attribute="class"
