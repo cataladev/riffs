@@ -483,7 +483,7 @@ export default function HumRecorder() {
     router.push("/edit");
   }
 
-  // Format time as MM:SS
+  
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -492,7 +492,7 @@ export default function HumRecorder() {
   
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="relative group overflow-hidden backdrop-blur-lg shadow-2xl border-2 gradient-border rounded-xl p-[2px] w-full max-w-[50%]">
+      <div className="relative group backdrop-blur-md shadow-2xl gradient-border p-[2px] w-full max-w-[50%]">
         <div className="relative z-10  rounded-xl p-6 shadow-lg">
           <h1 className="text-3xl font-bold mb-6 text-center text-gradient bg-gradient-to-r from-[#9722b6] via-[#fe5b35] to-[#eb3d5f] text-transparent bg-clip-text">
             Record Your Riff

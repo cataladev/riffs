@@ -121,12 +121,11 @@ code, pre {
   will-change: transform, opacity;
 }
 
-@layer utilities {
-  .gradient-border {
-    border: 2px solid;
-    border-image-slice: 1;
-    border-width: 2px;
-    border-image-source: linear-gradient(to right, #fe5b35, #9722b6);
-    border-radius: 25px;
-  }
+
+.gradient-border {
+  border: 10px solid;
+  border-image-slice: 1;
+  border-width: 2px;
+  border-image-source: linear-gradient(to right, #fe5b35, #9722b6);
+  border-radius: 15px;
 }

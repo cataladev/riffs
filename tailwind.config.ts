@@ -5,6 +5,9 @@ export default {
   darkMode: "class", 
   theme: {
     extend: {
+      backgroundImage: {
+        'gradient-primary': 'linear-gradient(to right, #9722b6, #fe5b35, #eb3d5f)',
+      },
       keyframes: {
         fadeIn: {
           "0%": { opacity: "0" },
