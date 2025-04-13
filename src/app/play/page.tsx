@@ -557,7 +557,6 @@ export default function GuitarFretboardVisualizer() {
             onClick={() => handleModeChange('guitar')}
             className={`px-4 py-2 rounded-lg ${mode === 'guitar' ? ' text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
           >
-            Guitar Mode
           </CoolButton>
         </div>
         

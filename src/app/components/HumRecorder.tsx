@@ -574,13 +574,13 @@ export default function HumRecorder() {
                 label={recording ? "Stop Recording" : "Start Recording"}
                 onClick={recording ? handleStop : handleStart}
                 className={`${recording ? "from-red-500 to-red-600" : ""} animate-fadeIn opacity-0`}
-                style={{ animationDelay: "1.0s", animationFillMode: "forwards" }}
+                style={{ animationDelay: "0.35s", animationFillMode: "forwards" }}
                 iconRight={<AudioLines size={16} />}
               />
             </div>
 
             <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4 text-gray-800">Detected Notes:</h2>
+              <h2 className="text-xl font-semibold mb-4 text-gray-500">Detected Notes:</h2>
               {Object.keys(notes).length > 0 ? (
                 <div className="bg-gray-50 p-4 rounded-lg max-h-60 overflow-y-auto">
                   <ul className="space-y-2">
@@ -604,7 +604,7 @@ export default function HumRecorder() {
                   onClick={handleDone}
                   label="Continue to Edit"
                   className="animate-fadeIn opacity-0"
-                  style={{ animationDelay: "1.5s", animationFillMode: "forwards" }}
+                  style={{ animationDelay: "0.05s", animationFillMode: "forwards" }}
                   iconRight={
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
