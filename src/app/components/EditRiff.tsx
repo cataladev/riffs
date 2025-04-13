@@ -274,7 +274,7 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
       <span className="text-[#fe5b35] font-bold min-w-[80px]">BPM: {bpm}</span>
       <input
         type="range"
-        min="40"
+        min="20"
         max="160"
         value={bpm}
         onChange={(e) => {
@@ -284,7 +284,7 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
         }}
         className="w-64 h-2 rounded-lg appearance-none cursor-pointer accent-[#9722b6]"
       />
-      <span className="text-sm text-gray-500">40-160 BPM</span>
+      <span className="text-sm text-gray-500">20-160 BPM</span>
     </div>
 
     {/* Top controls */}

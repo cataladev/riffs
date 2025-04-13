@@ -82,7 +82,7 @@ export default function WebCam() {
     if (error) {
         return (
             <div className="relative w-full h-full bg-gray-900 rounded-lg overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center justify-center ">
                     <div className="text-red-500 text-center p-4">
                         <p>{error}</p>
                         <p className="text-sm mt-2">Please check your camera permissions and try again.</p>
@@ -93,7 +93,7 @@ export default function WebCam() {
     }
 
     return (
-        <div className="relative w-full h-full bg-gray-900 rounded-lg overflow-hidden">
+        <div className="relative w-full h-full bg-gray-900 rounded-lg overflow-hidden animate-fadeIn delay-75">
             {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 z-10">
                     <div className="text-black text-center">

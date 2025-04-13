@@ -510,7 +510,7 @@ export default function GuitarFretboardVisualizer() {
   const fretSpacing = availableWidth / (FRET_COUNT + 1);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 animate-fadeIn">
       <div className="w-full max-w-4xl rounded-xl shadow-lg p-6 gradient-border">
         <h1 className="text-3xl font-bold mb-6 text-center text-gradient bg-gradient-to-r from-[#9722b6] via-[#fe5b35] to-[#eb3d5f] text-transparent bg-clip-text">
           🎸 Play Your Riff
@@ -521,7 +521,7 @@ export default function GuitarFretboardVisualizer() {
           <span className="text-[#fe5b35] font-bold min-w-[80px]">BPM: {bpm}</span>
           <input
             type="range"
-            min="40"
+            min="20"
             max="160"
             value={bpm}
             onChange={(e) => {
@@ -534,7 +534,7 @@ export default function GuitarFretboardVisualizer() {
             }}
             className="w-64 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#9722b6]"
           />
-          <span className="text-sm text-gray-500">40-160 BPM</span>
+          <span className="text-sm text-gray-500">20-160 BPM</span>
         </div>
         
         {/* Mode Selection */}
@@ -736,7 +736,7 @@ export default function GuitarFretboardVisualizer() {
         {/* Results Screen */}
         {showResults && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+            <div className="bg-orange-500s p-8 rounded-lg shadow-xl max-w-md w-full">
               <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">Results</h2>
               <div className="mb-6 text-center">
                 <div className="text-4xl font-bold text-[#eb3d5f] mb-2">{score}/{totalNotes}</div>
@@ -760,7 +760,7 @@ export default function GuitarFretboardVisualizer() {
         <div className="mt-8">
           <div className="mt-4 p-4 bg-pink-100 rounded-lg shadow-xl border border-pink-300">
             <h3 className="text-lg font-semibold mb-4 text-purple-800">🎵 Note Color Legend:</h3>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+            <div className="text-black grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
               {['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].map((note) => (
                 <div key={note} className="flex items-center">
                   <div className={`w-6 h-6 rounded-full ${getNoteColor(note)} mr-2`}></div>
@@ -775,7 +775,7 @@ export default function GuitarFretboardVisualizer() {
 
       {/* WebCam Modal */}
       {cameraModalOpen && (
-        <div className="fixed inset-0 z-50 bg-white bg-opacity-60 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-opacity-60 flex items-center justify-center">
           <div className="border-[conic-gradient(from_0deg,#9722b6_20deg,#8b5cf6_140deg,transparent_240deg)] relative w-[95vw] max-w-5xl aspect-[16/9] rounded-lg overflow-hidden shadow-2xl">
             {/* WebCam Background */}
             <div className="absolute inset-0 z-0">
@@ -805,10 +805,10 @@ export default function GuitarFretboardVisualizer() {
                             return (
                               <div
                                 key={`${stringIndex}-${validFret}`}
-                                className={`absolute w-8 h-8 ${currentNoteColor} rounded-full flex items-center justify-center z-20 shadow-md`}
+                                className={`absolute w-8 h-8 ${currentNoteColor} rounded-full flex items-center justify-center z-20 shadow-md top-20`}
                                 style={{
-                                  left: `${labelWidth + validFret * fretSpacing - 16}px`,
-                                  top: "-16px",
+                                  left: `${labelWidth + validFret * fretSpacing + 45}px`,
+                                  top: "100px",
                                 }}
                               >
                                 <span className="text-white text-xs font-bold">
