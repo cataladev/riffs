@@ -522,7 +522,7 @@ export default function GuitarFretboardVisualizer() {
           <input
             type="range"
             min="40"
-            max="240"
+            max="160"
             value={bpm}
             onChange={(e) => {
               const newBpm = parseInt(e.target.value);
@@ -534,29 +534,31 @@ export default function GuitarFretboardVisualizer() {
             }}
             className="w-64 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#9722b6]"
           />
-          <span className="text-sm text-gray-500">40-240 BPM</span>
+          <span className="text-sm text-gray-500">40-160 BPM</span>
         </div>
         
         {/* Mode Selection */}
         <div className="mb-6 flex justify-center space-x-4">
-          <button
+          <CoolButton
+            label={"Visualize"}
             onClick={() => handleModeChange('visualize')}
-            className={`px-4 py-2 rounded-lg ${mode === 'visualize' ? 'bg-[#9722b6] text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            className={`px-4 py-2 rounded-lg ${mode === 'visualize' ? ' text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
           >
-            Visualize
-          </button>
-          <button
+
+          </CoolButton>
+          <CoolButton
+            label ={"Keyboard Mode"}
             onClick={() => handleModeChange('keyboard')}
-            className={`px-4 py-2 rounded-lg ${mode === 'keyboard' ? 'bg-[#9722b6] text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            className={`px-4 py-2 rounded-lg ${mode === 'keyboard' ? ' text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
           >
-            Keyboard Mode
-          </button>
-          <button
+          </CoolButton>
+          <CoolButton
+            label = {"Guitar Mode"}
             onClick={() => handleModeChange('guitar')}
-            className={`px-4 py-2 rounded-lg ${mode === 'guitar' ? 'bg-[#9722b6] text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            className={`px-4 py-2 rounded-lg ${mode === 'guitar' ? ' text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
           >
             Guitar Mode
-          </button>
+          </CoolButton>
         </div>
         
         {/* Mode Instructions */}
