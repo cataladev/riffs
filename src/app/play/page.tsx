@@ -511,7 +511,7 @@ export default function GuitarFretboardVisualizer() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-4xl rounded-xl shadow-lg p-6">
+      <div className="w-full max-w-4xl rounded-xl shadow-lg p-6 gradient-border">
         <h1 className="text-3xl font-bold mb-6 text-center text-gradient bg-gradient-to-r from-[#9722b6] via-[#fe5b35] to-[#eb3d5f] text-transparent bg-clip-text">
           🎸 Play Your Riff
         </h1>
@@ -542,35 +542,34 @@ export default function GuitarFretboardVisualizer() {
           <CoolButton
             label={"Visualize"}
             onClick={() => handleModeChange('visualize')}
-            className={`px-4 py-2 rounded-lg ${mode === 'visualize' ? ' text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            className={`px-4 py-2 rounded-lg ${mode === 'visualize' ? ' text-white' : 'bg-pink-100 text-purple-800 hover:bg-pink-200'}`}
           >
 
           </CoolButton>
           <CoolButton
             label ={"Keyboard Mode"}
             onClick={() => handleModeChange('keyboard')}
-            className={`px-4 py-2 rounded-lg ${mode === 'keyboard' ? ' text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            className={`px-4 py-2 rounded-lg ${mode === 'keyboard' ? ' text-white' : 'bg-pink-100 text-purple-800 hover:bg-pink-200'}`}
           >
           </CoolButton>
           <CoolButton
             label = {"Guitar Mode"}
             onClick={() => handleModeChange('guitar')}
-            className={`px-4 py-2 rounded-lg ${mode === 'guitar' ? ' text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            className={`px-4 py-2 rounded-lg ${mode === 'guitar' ? ' text-white' : 'bg-pink-100 text-purple-800 hover:bg-pink-200'}`}
           >
-            Guitar Mode
           </CoolButton>
         </div>
         
         {/* Mode Instructions */}
-        <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-semibold text-blue-800 mb-2">
+        <div className="mb-6 p-4 bg-pink-100 rounded-lg border border-pink-300">
+          <h3 className="font-semibold text-purple-800 mb-2">
             {mode === 'visualize' 
               ? 'Visualization Mode' 
               : mode === 'keyboard' 
                 ? 'Keyboard Mode Instructions' 
                 : 'Guitar Mode Instructions'}
           </h3>
-          <p className="text-blue-700">
+          <p className="text-purple-700">
             {mode === 'visualize' 
               ? 'Watch and listen to the notes being played.' 
               : mode === 'keyboard' 
@@ -581,18 +580,18 @@ export default function GuitarFretboardVisualizer() {
         
         {/* Keyboard Bindings */}
         {mode === 'keyboard' && (
-          <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-            <h3 className="font-semibold text-yellow-800 mb-2">Keyboard Bindings</h3>
+          <div className="mb-6 p-4 bg-rose-100 rounded-lg border border-rose-300">
+            <h3 className="font-semibold text-[#ef5151] mb-2">Keyboard Bindings</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {Object.entries(KEYBOARD_MAPPING).map(([key, note]) => (
                 <div key={key} className="flex items-center">
-                  <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center mr-2 font-bold text-gray-700">
+                  <div className="w-8 h-8 bg-rose-50 rounded flex items-center justify-center mr-2 font-bold text-[#ef5151]">
                     {key.toUpperCase()}
                   </div>
                   <div className={`w-8 h-8 ${getNoteColor(note)} rounded-full flex items-center justify-center text-white font-bold`}>
                     {note.replace(EXTRACT_OCTAVE, '')}
                   </div>
-                  <span className="ml-2 text-sm text-gray-600">{note}</span>
+                  <span className="ml-2 text-sm text-[#ef5151]">{note}</span>
                 </div>
               ))}
             </div>
@@ -601,18 +600,18 @@ export default function GuitarFretboardVisualizer() {
         
         {/* Guitar Mode Display */}
         {mode === 'guitar' && (
-          <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+          <div className="mb-6 p-4 bg-rose-100 rounded-lg border border-rose-300">
             <div className="flex flex-col space-y-3">
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-gray-700 font-medium">Detected Note: </span>
-                  <span className="text-green-600 font-bold text-xl">
+                  <span className="text-[#ef5151] font-medium">Detected Note: </span>
+                  <span className="text-[#ef5151] font-bold text-xl">
                     {currentDetectedNote || 'No note detected'}
                   </span>
                 </div>
                 <div className="flex items-center">
-                  <span className="text-gray-700 mr-2">Clarity:</span>
-                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <span className="text-[#ef5151] font-bold mr-2">Clarity:</span>
+                  <div className="w-24 h-2 bg-gray-400 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-green-500 transition-all duration-100"
                       style={{ width: `${detectionClarity * 100}%` }}
@@ -623,12 +622,12 @@ export default function GuitarFretboardVisualizer() {
               </div>
               <div className="flex items-center">
                 <div className={`w-3 h-3 rounded-full mr-2 ${isListening ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-[#ef5151]">
                   {isListening ? 'Microphone active - Listening for notes...' : 'Microphone inactive'}
                 </span>
               </div>
               {lastDetectionTime > 0 && (
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-[#ef5151]">
                   Last detection: {new Date(lastDetectionTime).toLocaleTimeString()}
                 </div>
               )}
@@ -655,7 +654,7 @@ export default function GuitarFretboardVisualizer() {
             )}
 
             <div className={`relative z-10 mb-2 ${cameraModalOpen ? 'opacity-40 pointer-events-none' : ''}`} style={{ height: '220px' }}>
-              <div className="absolute top-0 bottom-0 w-1 bg-gray-800 z-10" style={{ left: `${labelWidth}px` }}></div>
+              <div className="absolute top-0 bottom-0 w-1 bg-rose- z-10" style={{ left: `${labelWidth}px` }}></div>
               {[...Array(FRET_COUNT)].map((_, fretIndex) => (
                 <div
                   key={fretIndex}
@@ -665,7 +664,7 @@ export default function GuitarFretboardVisualizer() {
               ))}
               {STANDARD_TUNING.map((stringNote, stringIndex) => (
                 <div key={stringIndex} className="absolute w-full" style={{ top: `${stringIndex * 36 + 10}px` }}>
-                  <div className="absolute left-0 text-center font-bold text-gray-700" style={{ width: `${labelWidth}px` }}>
+                  <div className="absolute left-0 text-center font-bold text-[#ef5151]" style={{ width: `${labelWidth}px` }}>
                     {stringNote.replace(/\d+$/, '')}
                   </div>
                   <div className={`absolute h-px ${stringIndex < 3 ? 'bg-gray-500' : 'bg-gray-400'} z-1`} style={{ left: `${labelWidth}px`, right: '0' }}></div>
@@ -698,7 +697,7 @@ export default function GuitarFretboardVisualizer() {
             </div>
             <div className="flex mt-4 overflow-x-auto" style={{ paddingLeft: `${labelWidth}px` }}>
               {[...Array(FRET_COUNT + 1)].map((_, fretIndex) => (
-                <div key={fretIndex} className="text-center text-xs flex-shrink-0 text-gray-600" style={{ width: `${fretSpacing}px` }}>
+                <div key={fretIndex} className="text-center text-xs flex-shrink-0 text-[#ef5151]" style={{ width: `${fretSpacing}px` }}>
                   {fretIndex}
                 </div>
               ))}
@@ -707,7 +706,7 @@ export default function GuitarFretboardVisualizer() {
         </div>
         
         {/* Play Controls */}
-        <div className="mb-6 flex justify-center space-x-4">
+        <div className="mb-6 flex justify-center space-x-4 ">
           <CoolButton
             label={isPlaying ? "Stop" : "Play"}
             onClick={playSequence}
@@ -758,8 +757,8 @@ export default function GuitarFretboardVisualizer() {
         
         {/* Note Color Legend */}
         <div className="mt-8">
-          <div className="mt-4 p-4 bg-white rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-4 text-black">🎵 Note Color Legend:</h3>
+          <div className="mt-4 p-4 bg-pink-100 rounded-lg shadow-xl border border-pink-300">
+            <h3 className="text-lg font-semibold mb-4 text-purple-800">🎵 Note Color Legend:</h3>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
               {['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].map((note) => (
                 <div key={note} className="flex items-center">
