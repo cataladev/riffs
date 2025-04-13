@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from "uuid"
 import { playNote, stopAllSounds, initAudioContext } from "../lib/audioService"
 import { useRouter } from "next/navigation"
 import CoolButton from "./coolbutton"
+import CoolButton2 from "./coolbutton2"
+import { Play, Pause, Plus, Minus, Guitar } from "lucide-react"
 
 // Define the EditRiffProps interface
 interface EditRiffProps {
@@ -162,7 +164,7 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
     }
   }
 
-  // Save the current notes
+
   const handleSaveNotes = () => {
     const updatedRiff = {
       ...riff,
@@ -262,66 +264,52 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
 
   return (
   <div className="p-8 max-w-6xl mx-auto">
-    <h1 className="text-3xl font-bold mb-4 bg-gradient-to-r from-[#fe5b35] to-[#9722b6] bg-clip-text text-transparent">
-      🛠️ Edit Your Riff (Piano Roll)
+   
+   <h1 className="text-3xl font-bold mb-4 bg-gradient-to-r from-[#9722b6] to-[#fe5b35] bg-clip-text text-transparent flex items-center gap-2">
+    🔧 Edit Your Riff (Piano Roll)
     </h1>
 
-    <p className="text-gray-700 mb-6">
-      Session:{" "}
-      <code className="bg-gray-100 px-2 py-1 rounded border border-gray-200">
-        {riff.recording}
-      </code>
-    </p>
 
     {/* BPM Display */}
     <div className="mb-6 flex items-center">
-      <span className="mr-2 text-gray-800 font-medium">BPM: {bpm}</span>
+      <span className="mr-2 text-[#fe5b35] font-bold">BPM: {bpm}</span>
       <span className="text-sm text-gray-500">
         (automatically detected from your recording)
       </span>
     </div>
 
     {/* Top controls */}
-    <div className="mb-6 flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <CoolButton
-          onClick={handleAddBeats}
-          label="+ Add 4 beats"
-          className="text-sm px-4 py-2"
-        />
+    <div className="mb-6 flex items-center justify-normal gap-12">
+      <CoolButton
+        onClick={handleAddBeats}
+        label="Add 4 beats"
+        className="text-sm px-4 py-2"
+        iconRight={<Plus size={16} />}
+      />
 
-        <CoolButton
-          onClick={handleRemoveBeats}
-          label="- Remove 4 beats"
-          className={`text-sm px-4 py-2 ${
-            numBeats <= 16 ? "opacity-40 cursor-not-allowed" : ""
-          }`}
-        />
+      <CoolButton2
+        onClick={handleRemoveBeats}
+        label="Remove 4 beats"
+        className={`text-sm px-4 py-2 ${
+          numBeats <= 16 ? "opacity-40 cursor-not-allowed" : ""
+        }`}
+        iconRight={<Minus size={16} />}
+      />
 
-        <CoolButton
-          onClick={playRiff}
-          label={isPlaying ? "Stop" : "Play"}
-          className={`text-sm px-5 py-2 ${
-            isPlaying
-              ? "from-[#9722b6] to-[#eb3d5f]"
-              : "from-[#fe5b35] to-[#eb3d5f]"
-          }`}
-        />
-      </div>
+      <CoolButton
+        onClick={playRiff}
+        label={isPlaying ? "Pause" : "Play"}
+        className="text-sm px-4 py-2"
+        iconRight={isPlaying ? <Pause size={16} /> : <Play size={16} />}
+      />
 
-      <div className="flex gap-4">
-        <CoolButton
-          onClick={handleSendAndPlay}
-          label="Send and Play"
-          className="from-pink-500 to-pink-600 text-sm px-4 py-2"
-        />
-        <CoolButton
-          onClick={handleSaveNotes}
-          label="Save"
-          className="from-gray-500 to-gray-600 text-sm px-4 py-2"
-        />
-      </div>
+      <CoolButton2
+        onClick={handleSendAndPlay}
+        label="Submit and Play •၊၊||၊|။||||။၊|။•"
+        className="text-sm px-4 py-2"
+      />
     </div>
+
 
     {/* Current length display below buttons */}
     <div className="mb-6 text-center">
@@ -422,7 +410,7 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
       </div>
     </div>
 
-    {/* Riff Notes list */}
+    {/* Riff Notes list
     <div className="mt-8">
       <h2 className="text-lg font-semibold mb-3 bg-gradient-to-r from-[#fe5b35] to-[#9722b6] bg-clip-text text-transparent">
         📝 Riff Notes
@@ -441,7 +429,7 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
           </li>
         ))}
       </ul>
-    </div>
+    </div> */}
 
     {/* Cancel Button */}
     <div className="flex justify-end mt-8">

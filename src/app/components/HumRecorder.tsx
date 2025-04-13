@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { v4 as uuidv4 } from "uuid"
 import CoolButton from "./coolbutton"
 import CoolButton2 from "./coolbutton2"
+import { AudioLines } from "lucide-react"
 
 type NotesMap = { [timestamp: string]: string }
 
@@ -572,6 +573,7 @@ export default function HumRecorder() {
                 label={recording ? "Stop Recording" : "Start Recording"}
                 onClick={recording ? handleStop : handleStart}
                 className={recording ? "from-red-500 to-red-600" : ""}
+                iconRight={<AudioLines size={16} />}
               />
             </div>
 
