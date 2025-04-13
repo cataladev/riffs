@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import * as Tone from 'tone';
 import { useSearchParams } from 'next/navigation';
 import * as Pitchy from "pitchy";
@@ -152,7 +152,8 @@ interface AudioProcessingEventData {
   playbackTime: number;
 }
 
-export default function GuitarFretboardVisualizer() {
+// Create a client component that uses useSearchParams
+function GuitarFretboardVisualizerContent() {
   const searchParams = useSearchParams();
   const notesParam = searchParams.get('notes');
   const bpmParam = searchParams.get('bpm');
@@ -814,5 +815,14 @@ export default function GuitarFretboardVisualizer() {
         </div>
       )}
     </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function GuitarFretboardVisualizer() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <GuitarFretboardVisualizerContent />
+    </Suspense>
   );
 }
