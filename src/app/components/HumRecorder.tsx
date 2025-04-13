@@ -435,8 +435,13 @@ export default function HumRecorder() {
     const timestamps = Object.keys(notes)
     if (timestamps.length >= 2) {
       const calculatedBpm = calculateBPM(timestamps)
-      setDetectedBpm(calculatedBpm)
-      setBpm(calculatedBpm)
+      if (calculatedBpm > 160) {
+        setDetectedBpm(160)
+      } else if(calculatedBpm < 20) {
+        setDetectedBpm(20)
+      } else {
+        setBpm(calculatedBpm)
+      }
     }
   }
 

@@ -159,7 +159,8 @@ function GuitarFretboardVisualizerContent() {
   const bpmParam = searchParams.get('bpm');
   
   const initialNotes = notesParam ? JSON.parse(decodeURIComponent(notesParam)) : ['E4', 'G4', 'B4', 'E5', 'D5', 'B4'];
-  const initialTempo = bpmParam ? parseInt(decodeURIComponent(bpmParam)) : 120;
+  // Ensure BPM is within bounds (20-160)
+  const initialTempo = bpmParam ? Math.min(160, Math.max(20, parseInt(decodeURIComponent(bpmParam)))) : 120;
   
   const [notes, setNotes] = useState(initialNotes);
   const [tempo, setTempo] = useState(initialTempo);
@@ -496,7 +497,8 @@ function GuitarFretboardVisualizerContent() {
             max="160"
             value={bpm}
             onChange={(e) => {
-              const newBpm = parseInt(e.target.value);
+              // Ensure BPM is within bounds (20-160)
+              const newBpm = Math.min(160, Math.max(20, parseInt(e.target.value)));
               setBpm(newBpm);
               setTempo(newBpm);
               if (isPlaying) {
