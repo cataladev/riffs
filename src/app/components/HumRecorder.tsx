@@ -6,8 +6,6 @@ import { saveRiff, RiffNote } from "../lib/riffStore"
 import { useRouter } from "next/navigation"
 import { v4 as uuidv4 } from "uuid"
 import CoolButton from "./coolbutton"
-import CoolButton2 from "./coolbutton2"
-import { AudioLines } from "lucide-react"
 
 type NotesMap = { [timestamp: string]: string }
 
@@ -482,7 +480,7 @@ export default function HumRecorder() {
     router.push("/edit");
   }
 
-  
+  // Format time as MM:SS
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -490,9 +488,9 @@ export default function HumRecorder() {
   }
   
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="relative group overflow-hidden bg-gradient-to-r from-[#fe5b35] to-[#9722b6] rounded-xl p-[2px] w-full max-w-[50%]">
-        <div className="relative z-10 bg-white rounded-xl p-6 shadow-lg">
+        <div className="relative z-10 bg-gray-950 rounded-xl p-6 shadow-2xl">
           <h1 className="text-3xl font-bold mb-6 text-center text-gradient bg-gradient-to-r from-[#9722b6] via-[#fe5b35] to-[#eb3d5f] text-transparent bg-clip-text">
             Record Your Riff
           </h1>
@@ -569,57 +567,58 @@ export default function HumRecorder() {
           )}
           
           <div className="flex justify-center mb-8">
-              <CoolButton
-                label={recording ? "Stop Recording" : "Start Recording"}
-                onClick={recording ? handleStop : handleStart}
-                className={recording ? "from-red-500 to-red-600" : ""}
-                iconRight={<AudioLines size={16} />}
-              />
-            </div>
+            <CoolButton
+              label={recording ? "Stop Recording" : "Start Recording"}
+              onClick={recording ? handleStop : handleStart}
+              className={recording ? "from-red-500 to-red-600" : ""}
+            />
+          </div>
 
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4 text-gray-800">Detected Notes:</h2>
-              {Object.keys(notes).length > 0 ? (
-                <div className="bg-gray-50 p-4 rounded-lg max-h-60 overflow-y-auto">
-                  <ul className="space-y-2">
-                    {Object.entries(notes).map(([time, note], i) => (
-                      <li key={i} className="flex justify-between items-center p-2 bg-white rounded shadow-sm">
-                        <span className="font-mono text-blue-600">{note}</span>
-                        <span className="text-gray-500 text-sm">{parseFloat(time).toFixed(2)}s</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <div className="bg-gray-50 p-4 rounded-lg text-center text-gray-500">
-                  No notes detected yet. Start recording and hum a melody.
-                </div>
-              )}
-            </div>
-            <div className="flex justify-center">
-              {Object.keys(notes).length > 0 && !recording && (
-                <CoolButton2
-                  onClick={handleDone}
-                  label="Continue to Edit"
-                  iconRight={
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  }
-                />
-              )}
-            </div>
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Detected Notes:</h2>
+            {Object.keys(notes).length > 0 ? (
+              <div className="bg-gray-50 p-4 rounded-lg max-h-60 overflow-y-auto">
+                <ul className="space-y-2">
+                  {Object.entries(notes).map(([time, note], i) => (
+                    <li key={i} className="flex justify-between items-center p-2 bg-white rounded shadow-sm">
+                      <span className="font-mono text-blue-600">{note}</span>
+                      <span className="text-gray-500 text-sm">{parseFloat(time).toFixed(2)}s</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div className="bg-gray-50 p-4 rounded-lg text-center text-gray-500">
+                No notes detected yet. Start recording and hum a melody.
+              </div>
+            )}
+          </div>
+          
+          <div className="flex justify-center">
+            {Object.keys(notes).length > 0 && !recording && (
+              <button
+                onClick={handleDone}
+                className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center"
+              >
+                <span>Continue to Edit</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 ml-2"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
+        <span className="absolute inset-0 bg-white/20 blur-sm animate-shine" />
       </div>
+    </div>
   )
 }

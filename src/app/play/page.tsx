@@ -7,6 +7,8 @@ import NoteSequencePlayer from "../components/NoteSequencePlayer";
 import GuitarFretboard from "../components/GuitarFretboard";
 import * as Pitchy from "pitchy";
 import WebCam from "../components/Camera/WebCamera";
+import CoolButton from "../components/coolbutton";
+import { CirclePause, CirclePlay, Camera } from "lucide-react";
 
 // Regular expression to extract octave from a note string
 const EXTRACT_OCTAVE = /\d+$/;
@@ -718,34 +720,19 @@ export default function GuitarFretboardVisualizer() {
         
         {/* Play Controls */}
         <div className="mb-6 flex justify-center space-x-4">
-          <button
+          <CoolButton
+            label={isPlaying ? "Stop" : "Play"}
             onClick={playSequence}
-            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center"
-          >
-            {isPlaying ? (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                Stop
-              </>
-            ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                </svg>
-                Play
-              </>
-            )}
-          </button>
+            iconRight={isPlaying ? <CirclePause size={16} /> : <CirclePlay size={16} />}
+          ></CoolButton>
 
           {mode === 'guitar' && (
-            <button
+            <CoolButton
+              label ="Open Camera"
               onClick={() => setCameraModalOpen(true)}
-              className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
-            >
-              Show Camera
-            </button>
+              iconRight={ <Camera/>}
+            />
+              
           )}
         </div>
         
@@ -771,9 +758,11 @@ export default function GuitarFretboardVisualizer() {
                 </div>
               </div>
               <div className="flex justify-center">
-                <button onClick={playSequence} className="px-6 py-2 bg-[#9722b6] text-white rounded-md font-bold hover:bg-[#7a1b92] transition-colors">
-                  Play Again
-                </button>
+                <CoolButton 
+                label={"Play Again"}
+                onClick={playSequence} 
+                className="px-6 py-2 text-white rounded-md font-bold transition-colors">
+                </CoolButton>
               </div>
             </div>
           </div>
@@ -782,7 +771,7 @@ export default function GuitarFretboardVisualizer() {
         {/* Note Color Legend */}
         <div className="mt-8">
           <div className="mt-4 p-4 bg-white rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-2">Note Color Legend</h3>
+            <h3 className="text-lg font-semibold mb-4 text-black">🎵 Note Color Legend:</h3>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
               {['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].map((note) => (
                 <div key={note} className="flex items-center">
@@ -856,12 +845,12 @@ export default function GuitarFretboardVisualizer() {
             </button>
 
             <div className="absolute bottom-4 w-full z-20 flex justify-center">
-              <button
+              <CoolButton
+                label={isPlaying ? "Stop" : "Play"}
                 onClick={playSequence}
-                className={`px-6 py-3 ${isPlaying ? "bg-blue-600": "bg-blue-500"} text-white rounded-lg shadow-md hover:bg-blue-700 transition`}
+                
               >
-                {isPlaying ? "Stop" : "Play"}
-              </button>
+              </CoolButton>
             </div>
           </div>
         </div>
