@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import NoteSequencePlayer from "../components/NoteSequencePlayer";
 import GuitarFretboard from "../components/GuitarFretboard";
 import * as Pitchy from "pitchy";
+import WebCam from "../components/Camera/WebCamera";
 
 // Regular expression to extract octave from a note string
 const EXTRACT_OCTAVE = /\d+$/;
@@ -209,6 +210,9 @@ export default function GuitarFretboardVisualizer() {
   const [fretboardHeight, setFretboardHeight] = useState<number>(0);
   const playIntervalRef = useRef<number | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+
+  // Add camera modal state
+  const [cameraModalOpen, setCameraModalOpen] = useState(false);
 
   // Create refs for state variables used in the audio process callback
   const modeRef = useRef(mode);
@@ -639,7 +643,14 @@ export default function GuitarFretboardVisualizer() {
         {/* Fretboard */}
         <div className="mb-6">
           <div className="relative w-full" ref={fretboardRef}>
-            <div className="relative mb-2" style={{ height: '220px' }}>
+            {/* Webcam: only show in guitar mode */}
+            {cameraModalOpen && (
+              <div className="absolute inset-0 z-0">
+                <WebCam />
+              </div>
+            )}
+
+            <div className={`relative z-10 mb-2 ${cameraModalOpen ? 'opacity-40 pointer-events-none' : ''}`} style={{ height: '220px' }}>
               <div className="absolute top-0 bottom-0 w-1 bg-gray-800 z-10" style={{ left: `${labelWidth}px` }}></div>
               {[...Array(FRET_COUNT)].map((_, fretIndex) => (
                 <div
@@ -706,7 +717,7 @@ export default function GuitarFretboardVisualizer() {
         </div>
         
         {/* Play Controls */}
-        <div className="mb-6 flex justify-center">
+        <div className="mb-6 flex justify-center space-x-4">
           <button
             onClick={playSequence}
             className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center"
@@ -727,6 +738,15 @@ export default function GuitarFretboardVisualizer() {
               </>
             )}
           </button>
+
+          {mode === 'guitar' && (
+            <button
+              onClick={() => setCameraModalOpen(true)}
+              className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+            >
+              Show Camera
+            </button>
+          )}
         </div>
         
         {/* Score & Feedback */}
@@ -775,6 +795,77 @@ export default function GuitarFretboardVisualizer() {
         </div>
         
       </div>
+
+      {/* WebCam Modal */}
+      {cameraModalOpen && (
+        <div className="fixed inset-0 z-50 bg-white bg-opacity-60 flex items-center justify-center">
+          <div className="border-[conic-gradient(from_0deg,#9722b6_20deg,#8b5cf6_140deg,transparent_240deg)] relative w-[95vw] max-w-5xl aspect-[16/9] rounded-lg overflow-hidden shadow-2xl">
+            {/* WebCam Background */}
+            <div className="absolute inset-0 z-0">
+              <WebCam />
+            </div>
+
+            {/* Fretboard Overlay */}
+            <div className="absolute inset-0 z-10 flex flex-col">
+              <div className="p-4 font-bold text-xl text-center bg-gradient-to-r from-[#9722b6] to-[#fe5b35] bg-clip-text text-transparent">
+                Fretboard Practice View
+              </div>
+
+              {/* Reuse the fretboard logic inside here */}
+              <div className="flex-grow overflow-hidden p-2">
+                <div className="relative w-full h-full">
+                  <div className="relative z-10 w-full h-full">
+                    {STANDARD_TUNING.map((stringNote, stringIndex) => (
+                      <div
+                        key={stringIndex}
+                        className="absolute w-full"
+                        style={{ top: `${stringIndex * 36 + 10}px` }}
+                      >
+                        {currentPositions
+                          .filter((pos) => pos.stringIndex === stringIndex)
+                          .map((pos) => {
+                            const validFret = Math.max(0, Math.min(pos.fret, FRET_COUNT));
+                            return (
+                              <div
+                                key={`${stringIndex}-${validFret}`}
+                                className={`absolute w-8 h-8 ${currentNoteColor} rounded-full flex items-center justify-center z-20 shadow-md`}
+                                style={{
+                                  left: `${labelWidth + validFret * fretSpacing - 16}px`,
+                                  top: "-16px",
+                                }}
+                              >
+                                <span className="text-white text-xs font-bold">
+                                  {currentNoteDisplayName}
+                                </span>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Close Button */}
+            <button
+              onClick={() => setCameraModalOpen(false)}
+              className="absolute top-2 right-2 z-20 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+            >
+              ✕
+            </button>
+
+            <div className="absolute bottom-4 w-full z-20 flex justify-center">
+              <button
+                onClick={playSequence}
+                className={`px-6 py-3 ${isPlaying ? "bg-blue-600": "bg-blue-500"} text-white rounded-lg shadow-md hover:bg-blue-700 transition`}
+              >
+                {isPlaying ? "Stop" : "Play"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

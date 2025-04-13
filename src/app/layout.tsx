@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist } from "next/font/google";
 import "./globals.css";
+import { GameProvider } from "./context/GameContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/modetoggle"; // <-- make sure this path is right
 
@@ -9,10 +10,7 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Riffs – Hum. Play. Create.",
@@ -36,11 +34,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <GameProvider>
           {children}
 
           <div className="fixed bottom-4 right-4 z-50">
             <ModeToggle />
           </div>
+          </GameProvider>
         </ThemeProvider>
       </body>
     </html>
