@@ -483,7 +483,7 @@ export default function HumRecorder() {
     router.push("/edit");
   }
 
-  
+  // Format time as MM:SS
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
