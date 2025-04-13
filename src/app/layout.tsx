@@ -5,12 +5,7 @@ import { GameProvider } from "./context/GameContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/modetoggle";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Riffs – Hum. Play. Create.",
@@ -25,9 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} antialiased animate-fadeIn`}
-      >
+      <body>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
