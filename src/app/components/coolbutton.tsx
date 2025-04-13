@@ -5,6 +5,7 @@ type CoolButtonProps = {
   onClick?: () => void;
   className?: string;
   iconRight?: React.ReactNode;
+  style?: React.CSSProperties;
 };
 
 export default function CoolButton({
@@ -12,11 +13,13 @@ export default function CoolButton({
   onClick,
   className,
   iconRight,
+  style,
 }: CoolButtonProps) {
   return (
     <Button
       onClick={onClick}
       size="lg"
+      style={style}
       className={`relative overflow-hidden group bg-gradient-to-r from-[#fe5b35] to-[#9722b6] text-white px-6 py-3 font-semibold rounded-lg 
         transition-all duration-200 hover:brightness-95 active:scale-95 ${className}`}>
       <span className="relative z-10 flex items-center">

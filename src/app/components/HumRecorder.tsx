@@ -492,7 +492,7 @@ export default function HumRecorder() {
   
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="relative group backdrop-blur-md shadow-2xl rounded-xl p-[2px] w-full max-w-[50%] gradient-border">
+      <div className="relative group backdrop-blur-md shadow-2xl rounded-xl p-[2px] w-full max-w-[50%] gradient-border animate-fadeIn">
         <div className="relative z-10 rounded-xl p-6 shadow-lg">
           <h1 className="text-3xl font-bold mb-6 text-center text-gradient bg-gradient-to-r from-[#9722b6] via-[#fe5b35] to-[#eb3d5f] text-transparent bg-clip-text">
             Record Your Riff
@@ -573,7 +573,8 @@ export default function HumRecorder() {
               <CoolButton
                 label={recording ? "Stop Recording" : "Start Recording"}
                 onClick={recording ? handleStop : handleStart}
-                className={recording ? "from-red-500 to-red-600" : ""}
+                className={`${recording ? "from-red-500 to-red-600" : ""} animate-fadeIn opacity-0`}
+                style={{ animationDelay: "1.0s", animationFillMode: "forwards" }}
                 iconRight={<AudioLines size={16} />}
               />
             </div>
@@ -602,6 +603,8 @@ export default function HumRecorder() {
                 <CoolButton2
                   onClick={handleDone}
                   label="Continue to Edit"
+                  className="animate-fadeIn opacity-0"
+                  style={{ animationDelay: "1.5s", animationFillMode: "forwards" }}
                   iconRight={
                     <svg
                       xmlns="http://www.w3.org/2000/svg"

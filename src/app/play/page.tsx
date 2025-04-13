@@ -661,20 +661,6 @@ export default function GuitarFretboardVisualizer() {
                   style={{ left: `${labelWidth + fretSpacing * (fretIndex + 1)}px` }}
                 ></div>
               ))}
-              {[3, 5, 7, 9, 12, 15, 17, 19, 21, 24].map((fretIndex) => (
-                <div
-                  key={fretIndex}
-                  className="absolute w-4 h-4 bg-gray-200 border border-gray-300 rounded-full z-5"
-                  style={{ left: `${labelWidth + fretSpacing * fretIndex - fretSpacing / 2}px`, bottom: fretIndex === 12 || fretIndex === 24 ? '20px' : '10px' }}
-                ></div>
-              ))}
-              {[12, 24].map((fretIndex) => (
-                <div
-                  key={`double-${fretIndex}`}
-                  className="absolute w-4 h-4 bg-gray-200 border border-gray-300 rounded-full z-5"
-                  style={{ left: `${labelWidth + fretSpacing * fretIndex - fretSpacing / 2}px`, bottom: '40px' }}
-                ></div>
-              ))}
               {STANDARD_TUNING.map((stringNote, stringIndex) => (
                 <div key={stringIndex} className="absolute w-full" style={{ top: `${stringIndex * 36 + 10}px` }}>
                   <div className="absolute left-0 text-center font-bold text-gray-700" style={{ width: `${labelWidth}px` }}>
