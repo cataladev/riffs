@@ -123,9 +123,24 @@ code, pre {
 
 
 .gradient-border {
-  border: 10px solid;
-  border-image-slice: 1;
-  border-width: 2px;
-  border-image-source: linear-gradient(to right, #fe5b35, #9722b6);
+  position: relative;
   border-radius: 15px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  border-radius: inherit;
+  background: linear-gradient(to right, #fe5b35, #9722b6);
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: -1;
 }
