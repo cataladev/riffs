@@ -3,8 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as Tone from 'tone';
 import { useSearchParams } from 'next/navigation';
-import NoteSequencePlayer from "../components/NoteSequencePlayer";
-import GuitarFretboard from "../components/GuitarFretboard";
 import * as Pitchy from "pitchy";
 import WebCam from "../components/Camera/WebCamera";
 import CoolButton from "../components/coolbutton";
@@ -114,20 +112,6 @@ const notesMatch = (note1: string, note2: string): boolean => {
   return match;
 };
 
-// Calculate the distance between two notes in cents
-const getNoteDistanceInCents = (note1: string, note2: string): number => {
-  const baseNote1 = note1.replace(EXTRACT_OCTAVE, '');
-  const baseNote2 = note2.replace(EXTRACT_OCTAVE, '');
-  const octave1 = parseInt(note1.match(EXTRACT_OCTAVE)?.[0] || '4');
-  const octave2 = parseInt(note2.match(EXTRACT_OCTAVE)?.[0] || '4');
-  const noteValues: Record<string, number> = {
-    'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5, 
-    'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
-  };
-  const semitoneDiff = (octave2 - octave1) * 12 + (noteValues[baseNote2] - noteValues[baseNote1]);
-  return semitoneDiff * 100;
-};
-
 // Find the closest available pitch for a detected note
 const findClosestPitch = (detectedPitch: string): string => {
   const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -161,6 +145,13 @@ const KEYBOARD_MAPPING: Record<string, string> = {
   'h': 'E4'
 };
 
+// Add type definition for audio processing event
+interface AudioProcessingEventData {
+  inputBuffer: AudioBuffer;
+  outputBuffer: AudioBuffer;
+  playbackTime: number;
+}
+
 export default function GuitarFretboardVisualizer() {
   const searchParams = useSearchParams();
   const notesParam = searchParams.get('notes');
@@ -188,10 +179,7 @@ export default function GuitarFretboardVisualizer() {
   const [fretboardWidth, setFretboardWidth] = useState(0);
   const fretboardRef = useRef<HTMLDivElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const lastPlayedNoteRef = useRef<string | null>(null);
-  const lastPlayedTimeRef = useRef<number>(0);
   const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [currentDetectedNote, setCurrentDetectedNote] = useState<string | null>(null);
   const [detectionClarity, setDetectionClarity] = useState<number>(0);
@@ -200,18 +188,8 @@ export default function GuitarFretboardVisualizer() {
   const detectorRef = useRef<Pitchy.PitchDetector<Float32Array> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const audioContextClosedRef = useRef<boolean>(false);
-  const [currentScoringNote, setCurrentScoringNote] = useState<string | null>(null);
-  const [lastScoredTime, setLastScoredTime] = useState<number>(0);
   const [waitingForNewNote, setWaitingForNewNote] = useState<boolean>(false);
   const [bpm, setBpm] = useState<number>(initialTempo);
-  const [detectedPitch, setDetectedPitch] = useState<string | null>(null);
-  const [isPitchDetecting, setIsPitchDetecting] = useState<boolean>(false);
-  const [isGuitarMode, setIsGuitarMode] = useState<boolean>(false);
-  const [currentFretPosition, setCurrentFretPosition] = useState<NotePosition | null>(null);
-  const [nextNotePreview, setNextNotePreview] = useState<NotePosition | null>(null);
-  const [fretboardHeight, setFretboardHeight] = useState<number>(0);
-  const playIntervalRef = useRef<number | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
 
   // Add camera modal state
   const [cameraModalOpen, setCameraModalOpen] = useState(false);
@@ -319,9 +297,6 @@ export default function GuitarFretboardVisualizer() {
     setTotalNotes(notes.length);
     setScoredNotes(new Set());
     setShowResults(false);
-    setCurrentScoringNote(null);
-    setLastScoredTime(0);
-    setWaitingForNewNote(false);
     Tone.Transport.bpm.value = bpm;
     setTempo(bpm);
 
@@ -368,8 +343,8 @@ export default function GuitarFretboardVisualizer() {
       let AudioContextClass: typeof AudioContext;
       if (window.AudioContext) {
         AudioContextClass = window.AudioContext;
-      } else if ((window as any).webkitAudioContext) {
-        AudioContextClass = (window as any).webkitAudioContext;
+      } else if ((window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext) {
+        AudioContextClass = (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       } else {
         throw new Error('AudioContext not supported');
       }
@@ -388,7 +363,7 @@ export default function GuitarFretboardVisualizer() {
       const detector = Pitchy.PitchDetector.forFloat32Array(bufferSize);
       detectorRef.current = detector;
       
-      processor.onaudioprocess = (e) => {
+      processor.onaudioprocess = (e: AudioProcessingEventData) => {
         if (!detectorRef.current) return;
         const input = new Float32Array(detectorRef.current.inputLength);
         e.inputBuffer.copyFromChannel(input, 0);
@@ -420,8 +395,8 @@ export default function GuitarFretboardVisualizer() {
               } else {
                 setFeedback('Correct note, but already scored!');
               }
-              setCurrentScoringNote(detectedPitch);
-              setLastScoredTime(now);
+              setCurrentDetectedNote(detectedPitch);
+              setLastDetectionTime(now);
               waitingForNewNoteRef.current = true;
               setWaitingForNewNote(true);
               setTimeout(() => {
@@ -451,11 +426,6 @@ export default function GuitarFretboardVisualizer() {
       console.error("Error starting pitch detection:", error);
       setFeedback("Error starting microphone. Please check permissions.");
     }
-  };
-
-  const startGuitarMode = async () => {
-    setMode('guitar');
-    await startPitchDetection();
   };
 
   const stopPitchDetection = () => {

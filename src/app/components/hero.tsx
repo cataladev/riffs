@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ModeToggle } from "@/components/modetoggle";
 import CoolButton from "./coolbutton";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";

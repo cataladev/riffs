@@ -6,7 +6,7 @@ import { playNote, stopAllSounds, initAudioContext } from "../lib/audioService"
 import { useRouter } from "next/navigation"
 import CoolButton from "./coolbutton"
 import CoolButton2 from "./coolbutton2"
-import { Play, Pause, Plus, Minus, Guitar } from "lucide-react"
+import { Play, Pause, Plus, Minus } from "lucide-react"
 
 // Define the EditRiffProps interface
 interface EditRiffProps {
@@ -59,7 +59,7 @@ const isAccidental = (note: string): boolean => {
   return note.includes('#')
 }
 
-export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
+export default function EditRiff({ riff, onCancel }: EditRiffProps) {
   const [notes, setNotes] = useState<Note[]>(riff.notes)
   const [bpm, setBpm] = useState(riff.bpm)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -164,15 +164,6 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
     }
   }
 
-
-  const handleSaveNotes = () => {
-    const updatedRiff = {
-      ...riff,
-      notes,
-      bpm
-    }
-    onSave(updatedRiff)
-  }
 
   // Send notes to play page
   const handleSendAndPlay = () => {

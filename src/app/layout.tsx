@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter, Geist } from "next/font/google";
 import "./globals.css";
 import { GameProvider } from "./context/GameContext";
 import { ThemeProvider } from "@/components/theme-provider";

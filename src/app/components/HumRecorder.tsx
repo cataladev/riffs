@@ -7,10 +7,10 @@ import { useRouter } from "next/navigation"
 import { v4 as uuidv4 } from "uuid"
 import CoolButton from "./coolbutton"
 import CoolButton2 from "./coolbutton2"
-import { AudioLines } from "lucide-react"
-import { useTheme } from "next-themes";
+import { AudioLines} from "lucide-react"
 
 type NotesMap = { [timestamp: string]: string }
+
 
 function getNoteFromFrequency(freq: number): string {
   const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
@@ -224,9 +224,7 @@ export default function HumRecorder() {
   const [noteHoldTime, setNoteHoldTime] = useState<number>(0)
   const [recordingTimer, setRecordingTimer] = useState<number | null>(null)
   const [recentNotes, setRecentNotes] = useState<string[]>([])
-  const [noteTransitionTime, setNoteTransitionTime] = useState<number>(0)
   const [filteredNote, setFilteredNote] = useState<string | null>(null)
-  const [filteredNoteTime, setFilteredNoteTime] = useState<number>(0)
   
   const audioContextRef = useRef<AudioContext | null>(null)
   const processorRef = useRef<ScriptProcessorNode | null>(null)
@@ -304,9 +302,7 @@ export default function HumRecorder() {
     setLastNoteTime(0)
     setNoteHoldTime(0)
     setRecentNotes([])
-    setNoteTransitionTime(0)
     setFilteredNote(null)
-    setFilteredNoteTime(0)
 
     processor.onaudioprocess = (e) => {
       const input = new Float32Array(detector.inputLength)
@@ -338,7 +334,6 @@ export default function HumRecorder() {
           setLastDetectedNote(note)
           setLastNoteTime(elapsedTime)
           setNoteHoldTime(0)
-          setNoteTransitionTime(elapsedTime)
           
           // Check if this is a significant note change (not an intermediate note)
           const isSignificantChange = isSignificantNoteChange(note, recentNotes);
@@ -354,7 +349,6 @@ export default function HumRecorder() {
           } else {
             // This is an intermediate note being filtered out
             setFilteredNote(note)
-            setFilteredNoteTime(elapsedTime)
             
             // Clear the filtered note after 1 second
             setTimeout(() => {

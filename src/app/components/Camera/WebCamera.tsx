@@ -10,7 +10,7 @@ export default function WebCam() {
     const [isLoading, setIsLoading] = useState(true);
     const [feedback, setFeedback] = useState<{ correct: boolean; note: string } | null>(null);
     const [showFeedback, setShowFeedback] = useState(false);
-    const { currentNote, checkNote, gameState, resetGame, startGame } = useGameContext();
+    const { currentNote, checkNote, gameState, resetGame } = useGameContext();
 
     // Handle note feedback
     useEffect(() => {
