@@ -275,7 +275,7 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
       <input
         type="range"
         min="40"
-        max="160"
+        max="240"
         value={bpm}
         onChange={(e) => {
           const newBpm = parseInt(e.target.value);
@@ -284,7 +284,7 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
         }}
         className="w-64 h-2 rounded-lg appearance-none cursor-pointer accent-[#9722b6]"
       />
-      <span className="text-sm text-gray-500">40-160 BPM</span>
+      <span className="text-sm text-gray-500">40-240 BPM</span>
     </div>
 
     {/* Top controls */}
@@ -332,7 +332,7 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
       <div className="inline-block bg-white overflow-hidden">
         {/* Beat markers row */}
         <div className="flex">
-          <div className="w-14 h-8 border border-gray-200 bg-gray-100 text-[#9722b6] font-semibold text-sm font-mono sticky left-0 z-10">
+          <div className="w-14 h-8 border border-gray-200 bg-gray-300 text-[#9722b6] font-semibold text-sm font-mono sticky left-0 z-10">
             Beats
           </div>
           <div className="flex">
@@ -350,7 +350,7 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
                   className={`${cellWidth} h-8 border border-gray-200 flex items-center justify-center ${
                     currentStep === step
                       ? "bg-gradient-to-r from-[#fe5b35]/20 to-[#9722b6]/20 text-gray-800 font-bold"
-                      : "bg-gray-50 text-gray-500"
+                      : "bg-gray-200 text-gray-500"
                   }`}
                 >
                   {isBeatMarker ? beatNumber : ""}
@@ -367,8 +367,8 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
             <div
               className={`w-14 h-12 border border-gray-200 flex items-center justify-center ${
                 isAccidental(pitch)
-                  ? "bg-gray-100 text-gray-700"
-                  : "bg-gray-50 text-gray-800"
+                  ? "bg-gray-300 text-gray-700"
+                  : "bg-gray-200 text-gray-800"
               } text-sm font-mono sticky left-0 z-10`}
             >
               {pitch}
@@ -390,8 +390,8 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
                     className={`${cellWidth} h-12 border border-gray-200 flex items-center justify-center relative ${
                       currentStep === step
                         ? "bg-gradient-to-r from-[#fe5b35]/10 to-[#9722b6]/10"
-                        : "bg-white"
-                    } hover:bg-gray-50 cursor-pointer transition-colors`}
+                        : "bg-gray-100"
+                    } hover:bg-gray-200 cursor-pointer transition-colors`}
                     onClick={() => handleCellClick(pitch, step)}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {

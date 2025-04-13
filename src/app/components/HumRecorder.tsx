@@ -492,7 +492,7 @@ export default function HumRecorder() {
   
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="relative group backdrop-blur-sm shadow-2xl rounded-xl p-[2px] w-full max-w-[50%] gradient-border">
+      <div className="relative group backdrop-blur-md shadow-2xl rounded-xl p-[2px] w-full max-w-[50%] gradient-border">
         <div className="relative z-10 rounded-xl p-6 shadow-lg">
           <h1 className="text-3xl font-bold mb-6 text-center text-gradient bg-gradient-to-r from-[#9722b6] via-[#fe5b35] to-[#eb3d5f] text-transparent bg-clip-text">
             Record Your Riff
@@ -579,7 +579,7 @@ export default function HumRecorder() {
             </div>
 
             <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4 text-gray-500">Detected Notes:</h2>
+              <h2 className="text-xl font-semibold mb-4 text-gray-800">Detected Notes:</h2>
               {Object.keys(notes).length > 0 ? (
                 <div className="bg-gray-50 p-4 rounded-lg max-h-60 overflow-y-auto">
                   <ul className="space-y-2">
