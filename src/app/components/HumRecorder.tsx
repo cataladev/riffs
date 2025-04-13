@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from "uuid"
 import CoolButton from "./coolbutton"
 import CoolButton2 from "./coolbutton2"
 import { AudioLines } from "lucide-react"
+import { useTheme } from "next-themes";
 
 type NotesMap = { [timestamp: string]: string }
 
