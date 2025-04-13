@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import EditRiff from '../components/EditRiff'
 import { getRiff, updateRiffNotes } from '../lib/riffStore'
+import Notes from '../components/notes'
 
 export default function EditPage() {
   const router = useRouter()
@@ -17,13 +18,10 @@ export default function EditPage() {
   }
 
   return (
-    <EditRiff 
-      riff={riff}
-      onSave={(updatedRiff) => {
-        updateRiffNotes(updatedRiff.notes, updatedRiff.bpm)
-        router.push('/play')
-      }}
-      onCancel={() => router.push('/play')}
-    />
+    <div>
+      <EditRiff riff={riff} onSave={(updatedRiff) => {updateRiffNotes(updatedRiff.notes, updatedRiff.bpm); router.push('/play')}}
+        onCancel={() => router.push('/play')}
+      />
+    </div>
   )
 }

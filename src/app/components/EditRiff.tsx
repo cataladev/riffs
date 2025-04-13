@@ -328,11 +328,11 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
     </div>
 
     {/* Scrollable container for the piano roll grid */}
-    <div className="overflow-auto rounded-lg shadow-md p-[1px] bg-gradient-to-r from-[#9722b6] via-[#8b5cf6] to-[#fe5b35]">
-      <div className="inline-block bg-white">
+    <div className="overflow-auto rounded-md z-10 p-[3px] bg-gradient-to-r from-[#9722b6] via-[#edca06] to-[#fe5b35] shadow-md animate-fadeIn">
+      <div className="inline-block bg-white overflow-hidden">
         {/* Beat markers row */}
         <div className="flex">
-          <div className="w-14 h-8 border-b border-r border-[#9722b6] flex items-center justify-center bg-gray-50 text-gray-700 text-sm font-mono sticky left-0 z-10">
+          <div className="w-14 h-8 border border-gray-200 bg-gray-100 text-[#9722b6] font-semibold text-sm font-mono sticky left-0 z-10">
             Beats
           </div>
           <div className="flex">
@@ -347,7 +347,7 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
               return (
                 <div
                   key={`beat-${step}`}
-                  className={`${cellWidth} h-8 border-b border-r border-[#9722b6] flex items-center justify-center ${
+                  className={`${cellWidth} h-8 border border-gray-200 flex items-center justify-center ${
                     currentStep === step
                       ? "bg-gradient-to-r from-[#fe5b35]/20 to-[#9722b6]/20 text-gray-800 font-bold"
                       : "bg-gray-50 text-gray-500"
@@ -365,7 +365,7 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
           <div key={pitch} className="flex">
             {/* Pitch label */}
             <div
-              className={`w-14 h-12 border-b border-r border-[#9722b6] flex items-center justify-center ${
+              className={`w-14 h-12 border border-gray-200 flex items-center justify-center ${
                 isAccidental(pitch)
                   ? "bg-gray-100 text-gray-700"
                   : "bg-gray-50 text-gray-800"
@@ -387,7 +387,7 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
                 return (
                   <div
                     key={step}
-                    className={`${cellWidth} h-12 border-b border-r border-[#9722b6] flex items-center justify-center relative ${
+                    className={`${cellWidth} h-12 border border-gray-200 flex items-center justify-center relative ${
                       currentStep === step
                         ? "bg-gradient-to-r from-[#fe5b35]/10 to-[#9722b6]/10"
                         : "bg-white"

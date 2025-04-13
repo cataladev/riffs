@@ -490,7 +490,7 @@ export default function HumRecorder() {
   }
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center">
       <div className="relative group overflow-hidden bg-gradient-to-r from-[#fe5b35] to-[#9722b6] rounded-xl p-[2px] w-full max-w-[50%]">
         <div className="relative z-10 bg-white rounded-xl p-6 shadow-lg">
           <h1 className="text-3xl font-bold mb-6 text-center text-gradient bg-gradient-to-r from-[#9722b6] via-[#fe5b35] to-[#eb3d5f] text-transparent bg-clip-text">
