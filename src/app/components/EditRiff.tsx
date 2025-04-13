@@ -282,7 +282,7 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
           setBpm(newBpm);
           setTimeSteps(getTimeSteps(newBpm, numBeats));
         }}
-        className="w-64 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#9722b6]"
+        className="w-64 h-2 rounded-lg appearance-none cursor-pointer accent-[#9722b6]"
       />
       <span className="text-sm text-gray-500">40-240 BPM</span>
     </div>
