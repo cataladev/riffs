@@ -102,6 +102,10 @@ function getSessionName(): string {
 // Default BPM for new recordings
 const DEFAULT_BPM = 120
 
+const { resolvedTheme } = useTheme();
+const isLight = resolvedTheme === "light";
+const isDark = resolvedTheme === "dark";
+
 // Function to calculate BPM from note timestamps
 function calculateBPM(timestamps: string[]): number {
   if (timestamps.length < 2) return DEFAULT_BPM
@@ -491,136 +495,155 @@ export default function HumRecorder() {
   }
   
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black text-black dark:text-white transition-colors duration-300">
       <div className="relative group overflow-hidden bg-gradient-to-r from-[#fe5b35] to-[#9722b6] rounded-xl p-[2px] w-full max-w-[50%]">
-        <div className="relative z-10 bg-white rounded-xl p-6 shadow-lg">
-          <h1 className="text-3xl font-bold mb-6 text-center text-gradient bg-gradient-to-r from-[#9722b6] via-[#fe5b35] to-[#eb3d5f] text-transparent bg-clip-text">
+        <div className="relative z-10 rounded-xl p-6 shadow-lg bg-white dark:bg-neutral-900">
+          <h1 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-[#9722b6] via-[#fe5b35] to-[#eb3d5f] text-transparent bg-clip-text">
             Record Your Riff
           </h1>
-
+  
           {detectedBpm && (
-            <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200">
+            <div className="mb-4 p-4 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-700 rounded-lg">
               <p className="font-medium text-lg">Detected BPM: {detectedBpm}</p>
               <p className="text-sm">Based on the rhythm of your humming</p>
             </div>
           )}
-          
+  
           <div className="mb-8">
-            <div className="h-24 bg-gray-100 rounded-lg overflow-hidden relative">
+            <div className="h-24 bg-gray-100 dark:bg-neutral-800 rounded-lg overflow-hidden relative">
               {recording && (
-                <div 
+                <div
                   className="absolute bottom-0 left-0 w-full bg-blue-500 transition-all duration-100"
-                  style={{
-                    height: `${audioLevel * 100}%`,
-                    opacity: 0.7,
-                  }}
+                  style={{ height: `${audioLevel * 100}%`, opacity: 0.7 }}
                 />
               )}
               <div className="absolute inset-0 flex items-center justify-center">
                 {recording ? (
                   <div className="flex flex-col items-center">
                     <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse mb-2"></div>
-                    <p className="text-gray-700 font-medium">
+                    <p className="text-gray-700 dark:text-gray-300 font-medium">
                       Recording: {formatTime(recordingDuration)}
                     </p>
                   </div>
                 ) : (
-                  <p className="text-gray-500">Press record to start humming your riff</p>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Press record to start humming your riff
+                  </p>
                 )}
               </div>
             </div>
           </div>
-          
+  
           {lastDetectedNote && (
-            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg">
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-gray-700 font-medium">Current Note: </span>
-                  <span className="text-blue-600 font-bold text-xl">{lastDetectedNote}</span>
+                  <span className="text-gray-700 dark:text-gray-200 font-medium">
+                    Current Note:{" "}
+                  </span>
+                  <span className="text-blue-600 dark:text-blue-300 font-bold text-xl">
+                    {lastDetectedNote}
+                  </span>
                 </div>
                 {noteHoldTime > 0 && (
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
                     Holding for: {noteHoldTime.toFixed(1)}s
                   </div>
                 )}
               </div>
               {noteHoldTime > 0 && (
-                <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
+                <div className="mt-2 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div
                     className="h-full bg-green-500 transition-all duration-100"
-                    style={{ width: `${Math.min(100, (noteHoldTime / 0.5) * 100)}%` }}
+                    style={{
+                      width: `${Math.min(100, (noteHoldTime / 0.5) * 100)}%`,
+                    }}
                   ></div>
                 </div>
               )}
             </div>
           )}
-          
+  
           {filteredNote && (
-            <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+            <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg">
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-gray-700 font-medium">Filtered Note: </span>
-                  <span className="text-yellow-600 font-bold text-xl">{filteredNote}</span>
+                  <span className="text-gray-700 dark:text-gray-200 font-medium">
+                    Filtered Note:{" "}
+                  </span>
+                  <span className="text-yellow-600 dark:text-yellow-300 font-bold text-xl">
+                    {filteredNote}
+                  </span>
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
                   Intermediate note (not recorded)
                 </div>
               </div>
             </div>
           )}
-          
+  
           <div className="flex justify-center mb-8">
-              <CoolButton
-                label={recording ? "Stop Recording" : "Start Recording"}
-                onClick={recording ? handleStop : handleStart}
-                className={recording ? "from-red-500 to-red-600" : ""}
-                iconRight={<AudioLines size={16} />}
-              />
-            </div>
-
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4 text-gray-800">Detected Notes:</h2>
-              {Object.keys(notes).length > 0 ? (
-                <div className="bg-gray-50 p-4 rounded-lg max-h-60 overflow-y-auto">
-                  <ul className="space-y-2">
-                    {Object.entries(notes).map(([time, note], i) => (
-                      <li key={i} className="flex justify-between items-center p-2 bg-white rounded shadow-sm">
-                        <span className="font-mono text-blue-600">{note}</span>
-                        <span className="text-gray-500 text-sm">{parseFloat(time).toFixed(2)}s</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <div className="bg-gray-50 p-4 rounded-lg text-center text-gray-500">
-                  No notes detected yet. Start recording and hum a melody.
-                </div>
-              )}
-            </div>
-            <div className="flex justify-center">
-              {Object.keys(notes).length > 0 && !recording && (
-                <CoolButton2
-                  onClick={handleDone}
-                  label="Continue to Edit"
-                  iconRight={
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
+            <CoolButton
+              label={recording ? "Stop Recording" : "Start Recording"}
+              onClick={recording ? handleStop : handleStart}
+              className={recording ? "from-red-500 to-red-600" : ""}
+              iconRight={<AudioLines size={16} />}
+            />
+          </div>
+  
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
+              Detected Notes:
+            </h2>
+            {Object.keys(notes).length > 0 ? (
+              <div className="bg-gray-50 dark:bg-neutral-900 p-4 rounded-lg max-h-60 overflow-y-auto">
+                <ul className="space-y-2">
+                  {Object.entries(notes).map(([time, note], i) => (
+                    <li
+                      key={i}
+                      className="flex justify-between items-center p-2 bg-white dark:bg-neutral-800 rounded shadow-sm"
                     >
-                      <path
-                        fillRule="evenodd"
-                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  }
-                />
-              )}
-            </div>
+                      <span className="font-mono text-blue-600 dark:text-blue-300">
+                        {note}
+                      </span>
+                      <span className="text-gray-500 dark:text-gray-400 text-sm">
+                        {parseFloat(time).toFixed(2)}s
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div className="bg-gray-50 dark:bg-neutral-800 p-4 rounded-lg text-center text-gray-500 dark:text-gray-400">
+                No notes detected yet. Start recording and hum a melody.
+              </div>
+            )}
+          </div>
+  
+          <div className="flex justify-center">
+            {Object.keys(notes).length > 0 && !recording && (
+              <CoolButton2
+                onClick={handleDone}
+                label="Continue to Edit"
+                iconRight={
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                }
+              />
+            )}
           </div>
         </div>
       </div>
+    </div>
   )
-}
+}  
