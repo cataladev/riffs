@@ -61,7 +61,7 @@ const isAccidental = (note: string): boolean => {
 
 export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
   const [notes, setNotes] = useState<Note[]>(riff.notes)
-  const [bpm] = useState(riff.bpm)
+  const [bpm, setBpm] = useState(riff.bpm)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [selectedNote, setSelectedNote] = useState<Note | null>(null)
@@ -269,13 +269,22 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
     🔧 Edit Your Riff (Piano Roll)
     </h1>
 
-
-    {/* BPM Display */}
-    <div className="mb-6 flex items-center">
-      <span className="mr-2 text-[#fe5b35] font-bold">BPM: {bpm}</span>
-      <span className="text-sm text-gray-500">
-        (automatically detected from your recording)
-      </span>
+    {/* BPM Controls */}
+    <div className="mb-6 flex items-center gap-4">
+      <span className="text-[#fe5b35] font-bold min-w-[80px]">BPM: {bpm}</span>
+      <input
+        type="range"
+        min="40"
+        max="240"
+        value={bpm}
+        onChange={(e) => {
+          const newBpm = parseInt(e.target.value);
+          setBpm(newBpm);
+          setTimeSteps(getTimeSteps(newBpm, numBeats));
+        }}
+        className="w-64 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#9722b6]"
+      />
+      <span className="text-sm text-gray-500">40-240 BPM</span>
     </div>
 
     {/* Top controls */}
@@ -319,31 +328,36 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
     </div>
 
     {/* Scrollable container for the piano roll grid */}
-    <div className="overflow-auto border border-gray-200 rounded-lg shadow-md">
-      <div className="inline-block">
+    <div className="overflow-auto rounded-lg shadow-md p-[1px] bg-gradient-to-r from-[#9722b6] via-[#8b5cf6] to-[#fe5b35]">
+      <div className="inline-block bg-white">
         {/* Beat markers row */}
         <div className="flex">
-          <div className="w-14 h-8 border border-gray-200 flex items-center justify-center bg-gray-50 text-gray-700 text-sm font-mono">
+          <div className="w-14 h-8 border-b border-r border-[#9722b6] flex items-center justify-center bg-gray-50 text-gray-700 text-sm font-mono sticky left-0 z-10">
             Beats
           </div>
-          {timeSteps.map((step) => {
-            const stepsPerBeat = bpm > 160 ? 1 : bpm > 120 ? 2 : 4;
-            const beatNumber = Math.floor(step / stepsPerBeat) + 1;
-            const isBeatMarker = step % stepsPerBeat === 0;
+          <div className="flex">
+            {timeSteps.map((step) => {
+              const stepsPerBeat = bpm > 160 ? 1 : bpm > 120 ? 2 : 4;
+              const beatNumber = Math.floor(step / stepsPerBeat) + 1;
+              const isBeatMarker = step % stepsPerBeat === 0;
+              
+              // Always use a fixed width for cells
+              const cellWidth = 'w-14';
 
-            return (
-              <div
-                key={`beat-${step}`}
-                className={`w-14 h-8 border border-gray-200 flex items-center justify-center ${
-                  currentStep === step
-                    ? "bg-gradient-to-r from-[#fe5b35]/20 to-[#9722b6]/20 text-gray-800 font-bold"
-                    : "bg-gray-50 text-gray-500"
-                }`}
-              >
-                {isBeatMarker ? beatNumber : ""}
-              </div>
-            );
-          })}
+              return (
+                <div
+                  key={`beat-${step}`}
+                  className={`${cellWidth} h-8 border-b border-r border-[#9722b6] flex items-center justify-center ${
+                    currentStep === step
+                      ? "bg-gradient-to-r from-[#fe5b35]/20 to-[#9722b6]/20 text-gray-800 font-bold"
+                      : "bg-gray-50 text-gray-500"
+                  }`}
+                >
+                  {isBeatMarker ? beatNumber : ""}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Piano roll grid */}
@@ -351,60 +365,65 @@ export default function EditRiff({ riff, onSave, onCancel }: EditRiffProps) {
           <div key={pitch} className="flex">
             {/* Pitch label */}
             <div
-              className={`w-14 h-12 border border-gray-200 flex items-center justify-center ${
+              className={`w-14 h-12 border-b border-r border-[#9722b6] flex items-center justify-center ${
                 isAccidental(pitch)
                   ? "bg-gray-100 text-gray-700"
                   : "bg-gray-50 text-gray-800"
-              } text-sm font-mono`}
+              } text-sm font-mono sticky left-0 z-10`}
             >
               {pitch}
             </div>
 
             {/* Time steps */}
-            {timeSteps.map((step) => {
-              const note = notes.find(
-                (n) => n.pitch === pitch && n.time === step
-              );
+            <div className="flex">
+              {timeSteps.map((step) => {
+                const note = notes.find(
+                  (n) => n.pitch === pitch && n.time === step
+                );
+                
+                // Always use a fixed width for cells
+                const cellWidth = 'w-14';
 
-              return (
-                <div
-                  key={step}
-                  className={`w-14 h-12 border border-gray-200 flex items-center justify-center relative ${
-                    currentStep === step
-                      ? "bg-gradient-to-r from-[#fe5b35]/10 to-[#9722b6]/10"
-                      : "bg-white"
-                  } hover:bg-gray-50 cursor-pointer transition-colors`}
-                  onClick={() => handleCellClick(pitch, step)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    const noteId = e.dataTransfer.getData("text/plain");
-                    handleMoveNote(noteId, pitch, step);
-                  }}
-                >
-                  {note && (
-                    <div
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData("text/plain", note.id);
-                        setSelectedNote(note);
-                      }}
-                      onDragEnd={() => setSelectedNote(null)}
-                      className={`w-6 h-6 rounded-full cursor-move shadow-md ${
-                        selectedNote === note
-                          ? "bg-gradient-to-r from-[#fe5b35] to-[#eb3d5f]"
-                          : isAccidental(pitch)
-                          ? "bg-gradient-to-r from-[#9722b6] to-[#eb3d5f]"
-                          : "bg-gradient-to-r from-[#fe5b35] to-[#9722b6]"
-                      }`}
-                      title={`Pitch ${pitch}, Beat ${
-                        Math.floor(step / (bpm > 160 ? 1 : bpm > 120 ? 2 : 4)) +
-                        1
-                      }`}
-                    ></div>
-                  )}
-                </div>
-              );
-            })}
+                return (
+                  <div
+                    key={step}
+                    className={`${cellWidth} h-12 border-b border-r border-[#9722b6] flex items-center justify-center relative ${
+                      currentStep === step
+                        ? "bg-gradient-to-r from-[#fe5b35]/10 to-[#9722b6]/10"
+                        : "bg-white"
+                    } hover:bg-gray-50 cursor-pointer transition-colors`}
+                    onClick={() => handleCellClick(pitch, step)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      const noteId = e.dataTransfer.getData("text/plain");
+                      handleMoveNote(noteId, pitch, step);
+                    }}
+                  >
+                    {note && (
+                      <div
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("text/plain", note.id);
+                          setSelectedNote(note);
+                        }}
+                        onDragEnd={() => setSelectedNote(null)}
+                        className={`w-6 h-6 rounded-full cursor-move shadow-md ${
+                          selectedNote === note
+                            ? "bg-gradient-to-r from-[#fe5b35] to-[#eb3d5f]"
+                            : isAccidental(pitch)
+                            ? "bg-gradient-to-r from-[#9722b6] to-[#eb3d5f]"
+                            : "bg-gradient-to-r from-[#fe5b35] to-[#9722b6]"
+                        }`}
+                        title={`Pitch ${pitch}, Beat ${
+                          Math.floor(step / (bpm > 160 ? 1 : bpm > 120 ? 2 : 4)) +
+                          1
+                        }`}
+                      ></div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         ))}
       </div>

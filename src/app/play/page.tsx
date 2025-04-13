@@ -200,6 +200,15 @@ export default function GuitarFretboardVisualizer() {
   const [currentScoringNote, setCurrentScoringNote] = useState<string | null>(null);
   const [lastScoredTime, setLastScoredTime] = useState<number>(0);
   const [waitingForNewNote, setWaitingForNewNote] = useState<boolean>(false);
+  const [bpm, setBpm] = useState<number>(initialTempo);
+  const [detectedPitch, setDetectedPitch] = useState<string | null>(null);
+  const [isPitchDetecting, setIsPitchDetecting] = useState<boolean>(false);
+  const [isGuitarMode, setIsGuitarMode] = useState<boolean>(false);
+  const [currentFretPosition, setCurrentFretPosition] = useState<NotePosition | null>(null);
+  const [nextNotePreview, setNextNotePreview] = useState<NotePosition | null>(null);
+  const [fretboardHeight, setFretboardHeight] = useState<number>(0);
+  const playIntervalRef = useRef<number | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
 
   // Create refs for state variables used in the audio process callback
   const modeRef = useRef(mode);
@@ -307,8 +316,8 @@ export default function GuitarFretboardVisualizer() {
     setCurrentScoringNote(null);
     setLastScoredTime(0);
     setWaitingForNewNote(false);
-    Tone.Transport.bpm.value = tempo;
-    setTempo(tempo);
+    Tone.Transport.bpm.value = bpm;
+    setTempo(bpm);
 
     const noteEvents = notes.map((_: string, i: number) => i);
     if (sequenceRef.current) sequenceRef.current.dispose();
@@ -498,8 +507,29 @@ export default function GuitarFretboardVisualizer() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-4xl bg-white rounded-xl shadow-lg p-6">
         <h1 className="text-3xl font-bold mb-6 text-center text-gradient bg-gradient-to-r from-[#9722b6] via-[#fe5b35] to-[#eb3d5f] text-transparent bg-clip-text">
-          Play Your Riff
+          🎸 Play Your Riff
         </h1>
+        
+        {/* BPM Controls */}
+        <div className="mb-6 flex items-center gap-4">
+          <span className="text-[#fe5b35] font-bold min-w-[80px]">BPM: {bpm}</span>
+          <input
+            type="range"
+            min="40"
+            max="240"
+            value={bpm}
+            onChange={(e) => {
+              const newBpm = parseInt(e.target.value);
+              setBpm(newBpm);
+              setTempo(newBpm);
+              if (isPlaying) {
+                Tone.Transport.bpm.value = newBpm;
+              }
+            }}
+            className="w-64 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#9722b6]"
+          />
+          <span className="text-sm text-gray-500">40-240 BPM</span>
+        </div>
         
         {/* Mode Selection */}
         <div className="mb-6 flex justify-center space-x-4">
