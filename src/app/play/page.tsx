@@ -522,7 +522,7 @@ export default function GuitarFretboardVisualizer() {
           <input
             type="range"
             min="40"
-            max="240"
+            max="160"
             value={bpm}
             onChange={(e) => {
               const newBpm = parseInt(e.target.value);
@@ -534,7 +534,7 @@ export default function GuitarFretboardVisualizer() {
             }}
             className="w-64 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#9722b6]"
           />
-          <span className="text-sm text-gray-500">40-240 BPM</span>
+          <span className="text-sm text-gray-500">40-160 BPM</span>
         </div>
         
         {/* Mode Selection */}
@@ -788,7 +788,7 @@ export default function GuitarFretboardVisualizer() {
       {/* WebCam Modal */}
       {cameraModalOpen && (
         <div className="fixed inset-0 z-50 bg-white bg-opacity-60 flex items-center justify-center">
-          <div className="border-[conic-gradient(from_0deg,#9722b6_20deg,#8b5cf6_140deg,transparent_240deg)] relative w-[95vw] max-w-5xl aspect-[16/9] rounded-lg overflow-hidden shadow-2xl">
+          <div className="gradient-border relative w-[95vw] max-w-5xl aspect-[16/9] rounded-lg overflow-hidden shadow-2xl">
             {/* WebCam Background */}
             <div className="absolute inset-0 z-0">
               <WebCam />

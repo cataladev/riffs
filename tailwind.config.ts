@@ -5,6 +5,9 @@ export default {
   darkMode: "class", 
   theme: {
     extend: {
+      animation: {
+        fadeIn: "fadeIn 2s ease-in-out",
+      },
       backgroundImage: {
         'gradient-primary': 'linear-gradient(to right, #9722b6, #fe5b35, #eb3d5f)',
       },
@@ -14,9 +17,7 @@ export default {
           "100%": { opacity: "1" },
         },
       },
-      animation: {
-        fadeIn: "fadeIn 0.5s ease-in-out",
-      },
+      
     },
   },
   plugins: [require("tailwindcss-animate"), require("tailwindcss-animated")],
