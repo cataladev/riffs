@@ -646,7 +646,7 @@ export default function GuitarFretboardVisualizer() {
             {/* Webcam: only show in guitar mode */}
             {cameraModalOpen && (
               <div className="absolute inset-0 z-0">
-                <WebCam onCameraOpen={() => console.log("Camera Active Behind Board")} />
+                <WebCam />
               </div>
             )}
 
@@ -802,7 +802,7 @@ export default function GuitarFretboardVisualizer() {
           <div className="border-[conic-gradient(from_0deg,#9722b6_20deg,#8b5cf6_140deg,transparent_240deg)] relative w-[95vw] max-w-5xl aspect-[16/9] rounded-lg overflow-hidden shadow-2xl">
             {/* WebCam Background */}
             <div className="absolute inset-0 z-0">
-              <WebCam onCameraOpen={() => console.log("Modal Camera Opened")} />
+              <WebCam />
             </div>
 
             {/* Fretboard Overlay */}
